@@ -1,0 +1,155 @@
+/* Reset básico */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Cenário de fundo */
+#cenario {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -9999;
+}
+
+/* Tela inicial e créditos */
+#tela-inicial,
+#creditos {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    display: none;
+    /* só aparece quando necessário */
+}
+
+#tela-inicial {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url('imagens/tela-inicial.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+#tela-inicial button,
+#creditos button {
+    margin: 10px;
+}
+
+/* Área principal do jogo */
+#jogo {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    height: 100%;
+    padding: 10px;
+}
+
+/* Painel de botões (à esquerda) */
+#painel-botoes {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+/* Área de texto do jogo (à direita) */
+#area-texto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+}
+
+/* Log e status */
+#log,
+#game-text {
+    max-height: 190px;
+    /* Limita a altura visível */
+    overflow-y: auto;
+    /* Permite rolar verticalmente */
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow-y: auto;
+    height: 50%;
+}
+
+/* Botões genéricos */
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #666;
+}
+
+/* Botão de transformação */
+#botao-transformar {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    font-size: 20px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+/* Volume */
+#controle-volume {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #000;
+}
+
+/* Status da vila */
+#vila-status {
+    margin-top: 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+/* Títulos e parágrafos */
+h1,
+h2,
+p {
+    margin-bottom: 10px;
+}
