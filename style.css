@@ -63,6 +63,12 @@ body {
     padding: 10px;
 }
 
+#painel-jogo {
+    justify-content: space-between;
+    display: flex;
+    gap: 150px;
+}
+
 /* Painel de botões (à esquerda) */
 #painel-botoes {
     width: 300px;
@@ -74,16 +80,32 @@ body {
 
 /* Área de texto do jogo (à direita) */
 #area-texto {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    padding-left: 20px;
+    margin: 10px;
+    width: 800px;
+}
+
+.discord-button {
+    background-color: #7289DA;
+    /* Cor de fundo do Discord */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    display: inline-block;
+    /* Permite que o botão tenha largura e altura */
+}
+
+.discord-button:hover {
+    background-color: #596cc2;
+    /* Um pouco mais escuro ao passar o mouse */
 }
 
 /* Log e status */
 #log,
 #game-text {
-    max-height: 190px;
+    max-height: 250px;
     /* Limita a altura visível */
     overflow-y: auto;
     /* Permite rolar verticalmente */
@@ -99,6 +121,7 @@ body {
 /* Botões genéricos */
 button {
     padding: 10px;
+    margin: 3px;
     border: none;
     border-radius: 6px;
     background-color: #444;
@@ -142,7 +165,8 @@ button:hover {
 /* Status da vila */
 #vila-status {
     margin-top: 10px;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #ccc;
     padding: 10px;
     border-radius: 8px;
 }
@@ -152,4 +176,29 @@ h1,
 h2,
 p {
     margin-bottom: 10px;
+}
+
+#inventario-menu {
+    /* Estilos básicos como já definidos no HTML */
+    text-align: center;
+}
+
+.item-inventario {
+    margin-bottom: 10px;
+}
+
+.item-desenho {
+    font-size: 1.5em;
+    /* Ajuste o tamanho dos "desenhos" */
+    margin-right: 5px;
+}
+
+#navegacao {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 1px;
+}
+
+#btnVoltar {
+    width: 292px;
 }

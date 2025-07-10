@@ -18,6 +18,7 @@ let heroi = {
         espada: false,
         escudo: false,
         armadura: false,
+        partesArmaduraCompradas: 0,
         arco: false,
         reforco: false,
         sorte: false,           // Nível 4: Sorte ativada
@@ -35,7 +36,6 @@ let vilas = [
     { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 } }  // Vila 3
 ];
 
-
 let missaoAtiva = null;
 let progressoMissao = 0;
 const trilha = document.getElementById('trilha');
@@ -48,8 +48,97 @@ let chefaoFinalAtivo = false;
 let vidaChefaoFinal = 0;
 let chefesDerrotados = 0;
 let numeroDaVila = 0;
+let inventarioAberto = false;
 document.getElementById('numero-vila').innerText = numeroDaVila;
 let vilaAtual = vilas[numeroDaVila];
+
+// --- armadura ---
+
+const sistemaArmadura = {
+    partes: [
+        { nome: "Botas", preco: 20, defesa: 1 },
+        { nome: "Calça", preco: 30, defesa: 2 },
+        { nome: "Braço", preco: 40, defesa: 3 },
+        { nome: "Capacete", preco: 50, defesa: 4 },
+        { nome: "Peitoral", preco: 60, defesa: 5 }
+    ],
+
+    // Referência ao botão do HTML para não precisar buscá-lo toda hora
+    botaoComprar: null,
+
+    // --- FUNÇÕES (MÉTODOS) ---
+
+    // 1. Pega a próxima parte a ser comprada com base no progresso do herói
+    getProximaParte: function () {
+        const proximaParteIndex = heroi.itens.partesArmaduraCompradas;
+        if (proximaParteIndex < this.partes.length) {
+            return this.partes[proximaParteIndex];
+        }
+        return null; // Retorna nulo se todas as partes já foram compradas
+    },
+
+    // 2. Atualiza a aparência do botão de compra (texto e preço)
+    atualizarBotao: function () {
+        if (!this.botaoComprar) {
+            this.botaoComprar = document.getElementById('btn-comprar-armadura');
+        }
+
+        const proximaParte = this.getProximaParte();
+
+        if (proximaParte) {
+            this.botaoComprar.textContent = `Comprar ${proximaParte.nome} (${proximaParte.preco} de ouro)`;
+            this.botaoComprar.disabled = false;
+        } else {
+            this.botaoComprar.textContent = "Armadura Completa!";
+            this.botaoComprar.disabled = true;
+        }
+    },
+
+    // 3. Lógica principal de compra
+    comprarProximaParte: function () {
+        const proximaParte = this.getProximaParte();
+
+        if (!proximaParte) {
+            log("Você já comprou todas as partes da Armadura!");
+            return;
+        }
+
+        if (heroi.dinheiro < proximaParte.preco) {
+            log(`Dinheiro insuficiente para comprar ${proximaParte.nome}.`);
+            return;
+        }
+
+        // Processa a compra
+        heroi.dinheiro -= proximaParte.preco;
+        heroi.defesa += proximaParte.defesa;
+        heroi.itens.partesArmaduraCompradas++;
+
+        log(`Você comprou ${proximaParte.nome}! Defesa +${proximaParte.defesa}.`);
+
+        // Verifica se a armadura foi completada
+        if (!this.getProximaParte()) {
+            heroi.itens.armadura = true;
+            log("Você completou sua Armadura Lendária! Sinta-se invencível!");
+        }
+
+        // Atualiza a tela e o botão
+        atualizarTela();
+        this.atualizarBotao();
+    },
+
+    // 4. Gera o texto para o inventário
+    getDescricaoInventario: function () {
+        const compradas = heroi.itens.partesArmaduraCompradas;
+        const total = this.partes.length;
+
+        if (compradas >= total) {
+            return 'Completa';
+        }
+        return `Parte ${compradas}/${total}`;
+    }
+};
+
+//---------------------- discord --------------------
 
 // ---------------------- Funções de Navegação ----------------------
 
@@ -80,6 +169,7 @@ function iniciarJogo() {
     document.getElementById('creditos').style.display = 'none';
     document.getElementById('jogo').style.display = 'block';
     document.getElementById('cenario').style.display = 'block';
+    mudarCenario('imagens/vila.jpg')
     trilha.play();
     startGame();
 }
@@ -256,88 +346,6 @@ function log(mensagem) {
 
 // ---------------------- Sistema de Benefícios da Vila ----------------------
 
-function aplicarBeneficiosVilaAtual() {
-    const vilaAtual = vilas[numeroDaVila];
-
-    // ➤ Benefícios exclusivos da vila natal (vila 0)
-    if (numeroDaVila === 0) {
-        if (vilaAtual.nivel >= 1 && !heroi.itens.arco) {
-            heroi.itens.arco = true;
-            heroi.ataque += 2;
-            log("Você ganhou um Arco! Ataque +2.");
-        }
-
-        if (vilaAtual.nivel >= 2 && !heroi.itens.reforco) {
-            heroi.itens.reforco = true;
-            heroi.defesa += 1;
-            log("O ferreiro reforçou sua armadura! Defesa +1.");
-        }
-
-        if (vilaAtual.nivel >= 3 && !mensagemTemploMostrada) {
-            mensagemTemploMostrada = true;
-            log("⚔️ O templo agora aceita sacrifícios! Use-os para ganhar poder.");
-        }
-
-        if (vilaAtual.nivel >= 4 && !heroi.itens.sorte) {
-            heroi.itens.sorte = true;
-            log("🍀 Você ganhou Sorte! A cada 10 monstros derrotados, ganha uma recompensa em ouro.");
-        }
-
-        if (vilaAtual.nivel >= 5 && !heroi.itens.escudoDivino) {
-            heroi.itens.escudoDivino = true;
-            log("🛡️ Uma aura divina agora o protege contra ataques.");
-        }
-    }
-
-    // ➤ Benefícios para demais vilas (vila 1 e 2)
-    if (numeroDaVila === 1) {
-        const bonus = vilaAtual.bonus || [];
-
-        if (vilaAtual.nivel >= 1 && !bonus.includes('ataque')) {
-            bonus.push('ataque');
-            heroi.ataque += 2;
-            log("⚔️ material novo para as armas na nova vila! Ataque +2.");
-        }
-
-        if (vilaAtual.nivel >= 2 && !bonus.includes('defesa')) {
-            bonus.push('defesa');
-            heroi.defesa += 2;
-            log("🛡️ material novo para as armaduras na nova vila! Defesa +2.");
-        }
-
-        if (vilaAtual.nivel >= 3 && !heroi.segundoHeroi) {
-            heroi.segundoHeroi = true;
-            log("🧑‍🤝‍🧑 Um segundo herói se juntou a você!");
-        }
-
-        vilaAtual.bonus = bonus; // Garante que os bônus sejam salvos na vila
-    }
-
-    if (numeroDaVila === 2) {
-        const bonus = vilaAtual.bonus || [];
-
-        if (vilaAtual.nivel >= 1 && !bonus.includes('ataque')) {
-            bonus.push('ataque');
-            heroi.ataque += 2;
-            log("⚔️ Armas afiadas pela nova vila! Ataque +2.");
-        }
-
-        if (vilaAtual.nivel >= 2 && !bonus.includes('defesa')) {
-            bonus.push('defesa');
-            heroi.defesa += 2;
-            log("🛡️ Armadura revestida pela nova vila! Defesa +2.");
-        }
-
-        if (vilaAtual.nivel >= 3 && !heroi.segundoHeroi) {
-            heroi.segundoHeroi = true;
-            log("🧑‍🤝‍🧑 Um segundo herói se juntou a você!");
-        }
-
-        vilaAtual.bonus = bonus; // Garante que os bônus sejam salvos na vila
-    }
-
-}
-
 
 // ==============================
 // 🛠️ Sistema de Evolução por Vila Secundária
@@ -449,6 +457,7 @@ function resetarHeroi() {
             espada: false,
             escudo: false,
             armadura: false,
+            partesArmaduraCompradas: 0,
             arco: false,
             reforco: false,
             sorte: false,
@@ -492,6 +501,28 @@ function resetarHeroi() {
 
     // Se você tiver uma variável global 'temploRevelado' ou outras flags de progresso, zere-as aqui:
     // temploRevelado = false;
+
+    // ---------------------- invetario ----------------------
+
+}
+
+function toggleInventario() {
+    inventarioAberto = !inventarioAberto;
+    document.getElementById('inventario-menu').style.display = inventarioAberto ? 'block' : 'none';
+    atualizarInventarioVisual(); // Chama a função para atualizar o conteúdo sempre que o menu é aberto
+}
+
+function atualizarInventarioVisual() {
+    const inventarioMenu = document.getElementById('inventario-menu');
+    if (!inventarioMenu || inventarioMenu.style.display === 'none') {
+        return; // Não atualiza se o menu não estiver visível ou o elemento não existir
+    }
+
+    document.getElementById('inventario-pocoes').textContent = heroi.itens.pocoes;
+    document.getElementById('inventario-elixires').textContent = heroi.itens.elixires;
+    document.getElementById('inventario-espada').textContent = heroi.itens.espada ? 'Sim' : 'Não';
+    document.getElementById('inventario-escudo').textContent = heroi.itens.escudo ? 'Sim' : 'Não';
+    document.getElementById('inventario-armadura').textContent = heroi.itens.armadura ? 'Sim' : 'Não';
 }
 
 // ---------------------- Sistema de Evolução ----------------------
@@ -506,6 +537,15 @@ function verificarNivel() {
         heroi.vida = 100;
         log(`Parabéns! Você subiu para o nível ${heroi.nivel}!`);
         atualizarTela();
+
+        if (missaoAtiva === 'uparNivel') {
+            const vilaAtual = vilas[numeroDaVila]; // Pega a vila atual para dar a recompensa
+            vilaAtual.materiais.ferro += 1; // Recompensa: 1 ferro
+            log("Missão 'Upar Nível' completa: você ganhou 1 ferro!");
+            missaoAtiva = null; // Reseta a missão ativa
+            progressoMissao = 0; // Reseta o progresso da missão
+            atualizarVilaStatus(); // Atualiza a exibição dos materiais na vila
+        }
     }
 }
 
@@ -539,11 +579,14 @@ function lutar() {
 
         if (vidaChefaoFinal <= 0) {
             log("Você derrotou o Monstro Original! Sua missão está completa.");
-            resetarHeroi();
+            voltarAoMenu();
+            setTimeout(() => {
+                voltarAoMenu();
+            }, 5000);
             setTimeout(() => {
                 alert("Fim do jogo! Você salvou todas as vilas e derrotou o criador dos monstros.");
-                voltarAoMenu();
-            }, 4000);
+                resetarHeroi();
+            }, 5000);
             chefaoFinalAtivo = false;
             return;
         }
@@ -564,34 +607,37 @@ function lutar() {
         return;
     }
 
-    // Combate comum
-    let dificuldade = heroi.nivel * 4;
-    let danoMonstro = Math.floor(Math.random() * dificuldade) + dificuldade;
+    if (!criaturaAncestralAtiva && !criaturaAncestralEncontrada) {
+        // Combate comum
+        let dificuldade = heroi.nivel * 4;
+        let danoMonstro = Math.floor(Math.random() * dificuldade) + dificuldade;
 
-    if (heroi.itens.escudoDivino && Math.random() < 0.2) {
-        danoMonstro = 0;
-        log("Os deuses o protegeram deste ataque!");
-    }
-
-    let danoRecebido = Math.max(0, danoMonstro - heroi.defesa);
-    heroi.vida -= danoRecebido;
-
-    heroi.dinheiro += Math.floor(Math.random() * heroi.nivel) + 1;
-    heroi.xp += Math.floor(Math.random() * 3) + heroi.nivel;
-    heroi.monstrosDerrotados++;
-
-    log(`Você lutou e recebeu ${danoRecebido} de dano.`);
-
-    if (missaoAtiva === 'caverna') {
-        progressoMissao++;
-        log(`Progresso da missão: ${progressoMissao}/3`);
-        if (progressoMissao >= 3) {
-            vilaAtual.materiais.madeira += 5;
-            log("Missão completa: ganhou 5 madeiras!");
-            missaoAtiva = null;
-            progressoMissao = 0;
-            atualizarVilaStatus();
+        if (heroi.itens.escudoDivino && Math.random() < 0.2) {
+            danoMonstro = 0;
+            log("Os deuses o protegeram deste ataque!");
         }
+
+        let danoRecebido = Math.max(0, danoMonstro - heroi.defesa);
+        heroi.vida -= danoRecebido;
+
+        heroi.dinheiro += Math.floor(Math.random() * heroi.nivel) + 1;
+        heroi.xp += Math.floor(Math.random() * 3) + heroi.nivel;
+        heroi.monstrosDerrotados++;
+
+        log(`Você lutou e recebeu ${danoRecebido} de dano.`);
+
+        if (missaoAtiva === 'caverna') {
+            progressoMissao++;
+            log(`Progresso da missão: ${progressoMissao}/3`);
+            if (progressoMissao >= 3) {
+                vilaAtual.materiais.madeira += 5;
+                log("Missão completa: ganhou 5 madeiras!");
+                missaoAtiva = null;
+                progressoMissao = 0;
+                atualizarVilaStatus();
+            }
+        }
+
     }
 
     if (heroi.itens.sorte && heroi.monstrosDerrotados >= 10) {
@@ -714,7 +760,7 @@ function sacrificar(tipo) {
 }
 
 function explorar() {
-    const vila = vilas[numeroDaVila];
+    const vila = vilas[numeroDaVila]; // Certifique-se de que 'vilas' e 'numeroDaVila' estão acessíveis globalmente
 
     if (cenarioAtual !== 'floresta') {
         log("Só pode explorar na floresta!");
@@ -722,34 +768,103 @@ function explorar() {
     }
 
     let chance = Math.random();
-    let encontrou = false;
+    let encontrouMaterialOuArtefato = false; // Flag para indicar se um material ou artefato foi encontrado
 
-    if (chance < 0.25) {
-        vila.materiais.pedra += 1;
-        log("Você encontrou uma pedra!");
-        encontrou = true;
-    } else if (chance < 0.5) {
-        vila.materiais.madeira += 1;
-        log("Você encontrou uma madeira!");
-        encontrou = true;
-    } else if (chance < 0.6) {
-        vila.materiais.ferro += 1;
-        log("Você encontrou um ferro raro!");
-        encontrou = true;
-    } else if (
-        chance < 0.62 &&
-        !heroi.itens.artefato &&
-        vila.nivel >= 2
-    ) {
+    // --- Nova distribuição de porcentagem e lógica de encontro ---
+    // Artefato: 3% (0.00 a 0.03)
+    if (chance < 0.03 && !heroi.itens.artefato && vila.nivel >= 2) {
         heroi.itens.artefato = true;
         log("Você encontrou o Artefato Lendário escondido na floresta! Sua defesa aumentou");
-        heroi.defesa = heroi.defesa + 2
-        encontrou = true;
-    } else {
+        heroi.defesa += 3; // Aumenta a defesa em 3, conforme seu código
+        encontrouMaterialOuArtefato = true; // Considera o artefato como algo encontrado para a missão de floresta, se aplicável.
+    }
+    // Monstro da Floresta: 7% (0.03 a 0.10)
+    else if (chance < 0.10) {
+        log("Um Monstro da Floresta surgiu de repente!");
+
+        // --- Início do Combate Comum ---
+        let dificuldade = heroi.nivel * 2;
+        let danoMonstro = Math.floor(Math.random() * dificuldade) + dificuldade;
+
+        if (heroi.itens.escudoDivino && Math.random() < 0.2) {
+            danoMonstro = 0;
+            log("Os deuses o protegeram deste ataque!");
+        }
+
+        let danoRecebido = Math.max(0, danoMonstro - heroi.defesa);
+        heroi.vida -= danoRecebido;
+
+        log(`Você lutou e recebeu ${danoRecebido} de dano.`); // Loga o dano recebido.
+
+        // --- LÓGICA PARA VIDA DO HERÓI <= 0 ---
+        if (heroi.vida <= 0) {
+            if (heroi.itens.elixires > 0) {
+                heroi.itens.elixires--;
+                heroi.vida = 50;
+                log("Você usou um Elixir e evitou a morte! Vida restaurada.");
+            } else {
+                let perdaDinheiro = Math.floor(heroi.dinheiro * 0.5);
+                let perdaXP = Math.min(5, heroi.xp);
+                heroi.dinheiro -= perdaDinheiro;
+                heroi.xp -= perdaXP;
+                log(`Você morreu! Perdeu ${perdaDinheiro} dinheiro e ${perdaXP} XP.`);
+                mudarCenario('imagens/vila.jpg');
+                atualizarTela();
+                return; // Termina a execução da função explorar() aqui, pois o herói morreu.
+            }
+        }
+        // --- FIM DA LÓGICA PARA VIDA DO HERÓI <= 0 ---
+
+        heroi.dinheiro += Math.floor(Math.random() * heroi.nivel) + 1;
+        heroi.xp += Math.floor(Math.random() * 3) + heroi.nivel;
+        heroi.monstrosDerrotados++;
+
+        verificarNivel(); // <--- Chamada para verificar se o herói subiu de nível após ganhar XP
+
+        if (missaoAtiva === 'caverna') {
+            progressoMissao++;
+            log(`Progresso da missão: ${progressoMissao}/3`);
+            if (progressoMissao >= 3) {
+                vila.materiais.madeira += 5; // Usa 'vila' do escopo de explorar()
+                log("Missão completa: ganhou 5 madeiras!");
+                missaoAtiva = null;
+                progressoMissao = 0;
+            }
+        }
+
+        if (heroi.itens.sorte && heroi.monstrosDerrotados >= 10) {
+            heroi.monstrosDerrotados = 0;
+            heroi.dinheiro += 20;
+            log("Sua sorte o recompensou! Ganhou dinheiro extra.");
+        }
+        // --- Fim do Combate Comum ---
+
+    }
+    // Madeira: 20% (0.10 a 0.30)
+    else if (chance < 0.30) {
+        vila.materiais.madeira += 1;
+        log("Você encontrou uma madeira!");
+        encontrouMaterialOuArtefato = true;
+    }
+    // Pedra: 20% (0.30 a 0.50)
+    else if (chance < 0.50) {
+        vila.materiais.pedra += 1;
+        log("Você encontrou uma pedra!");
+        encontrouMaterialOuArtefato = true;
+    }
+    // Ferro: 8% (0.50 a 0.58)
+    else if (chance < 0.58) {
+        vila.materiais.ferro += 1;
+        log("Você encontrou um ferro raro!");
+        encontrouMaterialOuArtefato = true;
+    }
+    // Nada: 42% (0.58 a 1.00)
+    else {
         log("Você não encontrou nada...");
     }
 
-    if (missaoAtiva === 'floresta' && encontrou) {
+    // A missão de 'floresta' só progride se um material ou artefato foi realmente encontrado.
+    if (missaoAtiva === 'floresta' && encontrouMaterialOuArtefato) {
         progressoMissao++;
         log(`Progresso da missão: ${progressoMissao}/2`);
         if (progressoMissao >= 2) {
@@ -818,32 +933,39 @@ function comprarItem(item) {
 }
 
 function comprarItemBlack(item) {
-    const precos = { elixir: 50, armadura: 60 };
-    const preco = precos[item];
-
-    if (heroi.dinheiro < preco) {
-        log(`Dinheiro insuficiente para comprar ${item} no mercado negro.`);
+    if (cenarioAtual !== 'floresta') {
+        log("Você só pode acessar o Mercado Negro na floresta.");
         return;
     }
 
-    if (item === 'armadura' && heroi.itens.armadura) {
-        log("Você já comprou uma Armadura!");
-        return;
-    }
-
-    heroi.dinheiro -= preco;
-
-    if (item === 'armadura') {
-        heroi.itens.armadura = true;
-        heroi.defesa += 5;
-        log("Você comprou uma Armadura! Defesa +5.");
-    } else if (item === 'elixir') {
-        heroi.itens.elixires++;
-        log("Você comprou um Elixir!");
+    if (item === 'elixir') {
+        if (heroi.dinheiro >= 50) {
+            heroi.dinheiro -= 50;
+            heroi.itens.elixires++;
+            log("Você comprou um Elixir! Ele será usado automaticamente ao morrer.");
+        } else {
+            log("Dinheiro insuficiente para comprar Elixir (custa 50).");
+        }
+    } else if (item === 'armadura') {
+        if (heroi.dinheiro >= 60) {
+            if (!heroi.itens.armadura) {
+                heroi.dinheiro -= 60;
+                heroi.itens.armadura = true;
+                heroi.defesa += 3;
+                log("Você comprou uma Armadura! Defesa +3.");
+            } else {
+                log("Você já possui uma Armadura.");
+            }
+        } else {
+            log("Dinheiro insuficiente para comprar Armadura (custa 60).");
+        }
+    } else {
+        log("Item inválido no mercado negro.");
     }
 
     atualizarTela();
 }
+
 
 function melhorarVila() {
     const dados = vilas[numeroDaVila];
@@ -917,7 +1039,7 @@ function narrativaVilaNivel5() {
     log("Você descobre: a vila foi destruída por uma entidade sombria. Está na hora do confronto final!");
 }
 
-// --- FUNÇÃO VERIFICARFINAL (Substitua a sua existente por esta) ---
+// --- FUNÇÃO VERIFICARFINAL---
 function verificarFinal() {
     if (heroi.itens.derrotouChefao) {
         if (numeroDaVila < vilas.length - 1) {
@@ -966,10 +1088,10 @@ function transformarEmMonstro() {
     document.getElementById('melhorar-vila').style.display = 'none';
 
     document.getElementById('botao-transformar').style.display = 'none';
-    resetarHeroi();
+    voltarAoMenu();
 
     setTimeout(() => {
-        voltarAoMenu();
+        resetarHeroi();
         alert("Final alternativo: Você se tornou um monstro.");
     }, 5000);
 }
@@ -1063,7 +1185,6 @@ function aoDerrotarCriaturaAncestral(nivel) {
     // heroi.itens[`chefaoDerrotado_${nivel}`] = true; // Removido ou mantido, conforme sua necessidade
     heroi.defesa += 5;
     log(`🎉 Você derrotou a Criatura Ancestral! Defesa +5.`);
-    log("Ela sussurra: 'Eu era como você... mas o verdadeiro mal ainda vive...'");
     // REMOVA OU COMENTE A LINHA ABAIXO:
     // avancarParaProximaVila(); // Esta linha DEVE ser removida!
 }

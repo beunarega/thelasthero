@@ -25,13 +25,17 @@
     <button onclick="carregarJogo()">Carregar Jogo</button>
     <button onclick="salvarJogo()">Salvar Jogo</button>
     <button onclick="mostrarCreditos()">Créditos</button>
-    <p> THE LAST HERO (beta 1.8) </p>
+    <p> THE LAST HERO (beta 1.9) </p>
   </div>
 
   <!-- Créditos -->
   <div id="creditos" style="display: none;">
     <h2>Créditos</h2>
     <p>Desenvolvido por [Marcos]</p>
+    <p>Acesse nosso discord</p>
+    <a href="https://discord.gg/KsFE2p4d" class="discord-button">
+      Entrar no Servidor Discord
+    </a>
     <button onclick="voltarAoMenu()">Voltar ao Menu</button>
   </div>
 
@@ -40,6 +44,17 @@
 
   <!-- Área do jogo -->
   <div id="jogo" style="display: none;">
+    <div id="navegacao" style="display: flex;">
+      <button id="btnVoltar" onclick="voltarAoMenu()">Voltar ao Menu</button>
+
+      <div id="controle-volume"
+        style="position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;">
+        🎵 Volume:
+        <input type="range" min="0" max="1" step="0.01" value="0.5" onchange="ajustarVolume(this.value)">
+        <button onclick="ajustarVolume(0)">🔇</button>
+        <button onclick="ajustarVolume(1)">🔊</button>
+      </div>
+    </div>
 
     <div id="painel-jogo">
       <!-- Coluna lateral de botões -->
@@ -77,6 +92,35 @@
           <p><strong>Missões</strong></p>
           <button onclick="ativarMissao('caverna')">Missão: Derrotar monstros</button>
           <button onclick="ativarMissao('floresta')">Missão: Coletar tesouros</button>
+          <button onclick="ativarMissao('uparNivel')">Missão: Upar Nível</button>
+        </div>
+
+        <div id="game-container" style="display: flex;">
+          <div id="inventario-menu"
+            style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #f0f0f0; border: 2px solid #ccc; padding: 20px; z-index: 10;">
+            <h3>Inventário do Herói</h3>
+            <div class="item-inventario">
+              <span class="item-desenho">🧪</span> <span class="item-nome">Poções:</span> <span
+                id="inventario-pocoes">0</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">✨</span> <span class="item-nome">Elixires:</span> <span
+                id="inventario-elixires">0</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">🗡️</span> <span class="item-nome">Espada:</span> <span
+                id="inventario-espada">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">🛡️</span> <span class="item-nome">Escudo:</span> <span
+                id="inventario-escudo">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho"><span style="font-size: 1.2em;">👕</span></span> <span
+                class="item-nome">Armadura:</span> <span id="inventario-armadura">Não</span>
+            </div>
+            <button onclick="toggleInventario()">Fechar</button>
+          </div>
         </div>
 
         <!-- Exploração -->
@@ -109,13 +153,14 @@
           <p>Ferro: <span id="ferro">0</span></p>
         </div>
 
-        <button onclick="voltarAoMenu()">Voltar ao Menu</button>
+
       </div>
 
       <!-- Área de texto (lado direito) -->
       <div id="area-texto">
         <div id="game-text"></div>
         <div id="log"></div>
+        <button onclick="toggleInventario()">Inventário</button>
       </div>
     </div>
 
@@ -141,17 +186,10 @@
       <source src="audio/musica.mp3" type="audio/mpeg">
       Seu navegador não suporta áudio.
     </audio>
-    <div id="controle-volume"
-      style="position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;">
-      🎵 Volume:
-      <input type="range" min="0" max="1" step="0.01" value="1" onchange="ajustarVolume(this.value)">
-      <button onclick="ajustarVolume(0)">🔇</button>
-      <button onclick="ajustarVolume(1)">🔊</button>
-    </div>
+    <script src="game.js" defer></script>
 
   </div>
 
-  <script src="game.js"></script>
 </body>
 
 </html>
