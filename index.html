@@ -21,7 +21,8 @@
   <!-- Tela inicial -->
   <div id="tela-inicial">
     <h1>THE LAST HERO</h1>
-    <button onclick="iniciarJogo()">Jogar</button>
+    <button id="btn-jogar" onclick="iniciarJogo()">Jogar</button>
+    <button id="btn-novo-jogo" onclick="novoJogo()" style="display: none;">Novo Jogo</button>
     <button onclick="carregarJogo()">Carregar Jogo</button>
     <button onclick="salvarJogo()">Salvar Jogo</button>
     <button onclick="mostrarCreditos()">Créditos</button>
@@ -75,16 +76,16 @@
         <!-- Loja -->
         <div id="loja" style="display: none;">
           <p><strong>Loja</strong></p>
-          <button onclick="comprarItem('espada')">Comprar Espada (20)</button>
-          <button onclick="comprarItem('escudo')">Comprar Escudo (25)</button>
-          <button onclick="comprarItem('pocao')">Comprar Poção (10)</button>
+          <button onclick="comprarItem('espada')">Comprar Espada (20g)</button>
+          <button onclick="comprarItem('escudo')">Comprar Escudo (25g)</button>
+          <button onclick="comprarItem('pocao')">Comprar Poção (10g)</button>
         </div>
 
         <!-- Blackmarket -->
         <div id="blackmarket" style="display: none;">
           <p><strong>Blackmarket</strong></p>
-          <button onclick="comprarItemBlack('elixir')">Comprar Elixir (50)</button>
-          <button onclick="comprarItemBlack('armadura')">Comprar Armadura (60)</button>
+          <button onclick="comprarItemBlack('elixir')">Comprar Elixir (50g)</button>
+          <button id="botao-armadura" onclick="comprarProximaParteArmadura()">Comprar Armadura</button>
         </div>
 
         <!-- Missões -->
@@ -99,26 +100,45 @@
           <div id="inventario-menu"
             style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #f0f0f0; border: 2px solid #ccc; padding: 20px; z-index: 10;">
             <h3>Inventário do Herói</h3>
+
             <div class="item-inventario">
               <span class="item-desenho">🧪</span> <span class="item-nome">Poções:</span> <span
                 id="inventario-pocoes">0</span>
             </div>
+
             <div class="item-inventario">
               <span class="item-desenho">✨</span> <span class="item-nome">Elixires:</span> <span
                 id="inventario-elixires">0</span>
             </div>
+
             <div class="item-inventario">
               <span class="item-desenho">🗡️</span> <span class="item-nome">Espada:</span> <span
                 id="inventario-espada">Não</span>
             </div>
+
             <div class="item-inventario">
               <span class="item-desenho">🛡️</span> <span class="item-nome">Escudo:</span> <span
                 id="inventario-escudo">Não</span>
             </div>
+
+            <!-- Armadura por partes -->
             <div class="item-inventario">
-              <span class="item-desenho"><span style="font-size: 1.2em;">👕</span></span> <span
-                class="item-nome">Armadura:</span> <span id="inventario-armadura">Não</span>
+              <span class="item-desenho">🥾</span> <span class="item-nome">Bota:</span> <span
+                id="inventario-bota">Não</span>
             </div>
+            <div class="item-inventario">
+              <span class="item-desenho">👖</span> <span class="item-nome">Calça:</span> <span
+                id="inventario-calca">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">🪖</span> <span class="item-nome">Capacete:</span> <span
+                id="inventario-capacete">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">👕</span> <span class="item-nome">Peitoral:</span> <span
+                id="inventario-peitoral">Não</span>
+            </div>
+
             <button onclick="toggleInventario()">Fechar</button>
           </div>
         </div>
@@ -186,7 +206,13 @@
       <source src="audio/musica.mp3" type="audio/mpeg">
       Seu navegador não suporta áudio.
     </audio>
+
     <script src="game.js" defer></script>
+    <script>
+      window.onload = () => {
+        atualizarBotoesTelaInicial();
+      };
+    </script>
 
   </div>
 

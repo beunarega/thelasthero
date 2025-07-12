@@ -18,7 +18,12 @@ let heroi = {
         espada: false,
         escudo: false,
         armadura: false,
-        partesArmaduraCompradas: 0,
+        partesArmadura: {
+            bota: false,
+            calca: false,
+            capacete: false,
+            peitoral: false
+        },
         arco: false,
         reforco: false,
         sorte: false,           // Nível 4: Sorte ativada
@@ -36,6 +41,13 @@ let vilas = [
     { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 } }  // Vila 3
 ];
 
+const partesOrdem = [
+    { nome: 'bota', preco: 30, defesa: 2 },
+    { nome: 'calca', preco: 40, defesa: 3 },
+    { nome: 'capacete', preco: 50, defesa: 4 },
+    { nome: 'peitoral', preco: 60, defesa: 5 }
+];
+
 let missaoAtiva = null;
 let progressoMissao = 0;
 const trilha = document.getElementById('trilha');
@@ -51,94 +63,6 @@ let numeroDaVila = 0;
 let inventarioAberto = false;
 document.getElementById('numero-vila').innerText = numeroDaVila;
 let vilaAtual = vilas[numeroDaVila];
-
-// --- armadura ---
-
-const sistemaArmadura = {
-    partes: [
-        { nome: "Botas", preco: 20, defesa: 1 },
-        { nome: "Calça", preco: 30, defesa: 2 },
-        { nome: "Braço", preco: 40, defesa: 3 },
-        { nome: "Capacete", preco: 50, defesa: 4 },
-        { nome: "Peitoral", preco: 60, defesa: 5 }
-    ],
-
-    // Referência ao botão do HTML para não precisar buscá-lo toda hora
-    botaoComprar: null,
-
-    // --- FUNÇÕES (MÉTODOS) ---
-
-    // 1. Pega a próxima parte a ser comprada com base no progresso do herói
-    getProximaParte: function () {
-        const proximaParteIndex = heroi.itens.partesArmaduraCompradas;
-        if (proximaParteIndex < this.partes.length) {
-            return this.partes[proximaParteIndex];
-        }
-        return null; // Retorna nulo se todas as partes já foram compradas
-    },
-
-    // 2. Atualiza a aparência do botão de compra (texto e preço)
-    atualizarBotao: function () {
-        if (!this.botaoComprar) {
-            this.botaoComprar = document.getElementById('btn-comprar-armadura');
-        }
-
-        const proximaParte = this.getProximaParte();
-
-        if (proximaParte) {
-            this.botaoComprar.textContent = `Comprar ${proximaParte.nome} (${proximaParte.preco} de ouro)`;
-            this.botaoComprar.disabled = false;
-        } else {
-            this.botaoComprar.textContent = "Armadura Completa!";
-            this.botaoComprar.disabled = true;
-        }
-    },
-
-    // 3. Lógica principal de compra
-    comprarProximaParte: function () {
-        const proximaParte = this.getProximaParte();
-
-        if (!proximaParte) {
-            log("Você já comprou todas as partes da Armadura!");
-            return;
-        }
-
-        if (heroi.dinheiro < proximaParte.preco) {
-            log(`Dinheiro insuficiente para comprar ${proximaParte.nome}.`);
-            return;
-        }
-
-        // Processa a compra
-        heroi.dinheiro -= proximaParte.preco;
-        heroi.defesa += proximaParte.defesa;
-        heroi.itens.partesArmaduraCompradas++;
-
-        log(`Você comprou ${proximaParte.nome}! Defesa +${proximaParte.defesa}.`);
-
-        // Verifica se a armadura foi completada
-        if (!this.getProximaParte()) {
-            heroi.itens.armadura = true;
-            log("Você completou sua Armadura Lendária! Sinta-se invencível!");
-        }
-
-        // Atualiza a tela e o botão
-        atualizarTela();
-        this.atualizarBotao();
-    },
-
-    // 4. Gera o texto para o inventário
-    getDescricaoInventario: function () {
-        const compradas = heroi.itens.partesArmaduraCompradas;
-        const total = this.partes.length;
-
-        if (compradas >= total) {
-            return 'Completa';
-        }
-        return `Parte ${compradas}/${total}`;
-    }
-};
-
-//---------------------- discord --------------------
 
 // ---------------------- Funções de Navegação ----------------------
 
@@ -174,6 +98,13 @@ function iniciarJogo() {
     startGame();
 }
 
+function novoJogo() {
+    log("🌟 Novo jogo iniciado.");
+    resetarHeroi();          // 🔁 Primeiro resetar tudo
+    atualizarTela();         // 🔁 E garantir que o HUD está certo
+    iniciarJogo();           // ✅ Depois iniciar a interface
+}
+
 function mostrarCreditos() {
     document.getElementById('tela-inicial').style.display = 'none';
     document.getElementById('creditos').style.display = 'block';
@@ -186,8 +117,24 @@ function voltarAoMenu() {
     document.getElementById('tela-inicial').style.display = 'block';
     document.getElementById('log').innerHTML = '';
     document.getElementById('botao-transformar').style.display = 'none';
+    atualizarBotoesTelaInicial();
 }
 
+function atualizarBotoesTelaInicial() {
+    const jogar = document.getElementById('btn-jogar');
+    const novoJogo = document.getElementById('btn-novo-jogo');
+
+    if (!jogar || !novoJogo) return; // evita erro se os elementos não existem
+
+    const temProgresso =
+        heroi.nivel > 1 ||
+        heroi.xp > 0 ||
+        heroi.dinheiro > 0 ||
+        numeroDaVila > 0;
+
+    jogar.style.display = temProgresso ? 'inline-block' : 'none';
+    novoJogo.style.display = 'inline-block';
+}
 // ---------------------- Sistema de Cenarios ----------------------
 
 function mudarCenario(imagem, logar = true) {
@@ -261,6 +208,7 @@ function mudarCenario(imagem, logar = true) {
     // Chame estas funções para garantir que a UI esteja sempre atualizada
     atualizarTela();
     atualizarAcoesEspecificas();
+    atualizarTextoBotaoArmadura();
 
     // Esta chamada estava na sua base original, portanto foi mantida.
     if (cenarioAtual === 'caverna') {
@@ -344,7 +292,44 @@ function log(mensagem) {
     logDiv.scrollTop = logDiv.scrollHeight; // ⬅️ Sempre rola até o final
 }
 
-// ---------------------- Sistema de Benefícios da Vila ----------------------
+// ---------------------- armadura ----------------------
+
+function comprarProximaParteArmadura() {
+    for (let parte of partesOrdem) {
+        if (!heroi.itens.partesArmadura[parte.nome]) {
+            if (heroi.dinheiro < parte.preco) {
+                log(`Dinheiro insuficiente para comprar ${parte.nome}.`);
+                return;
+            }
+
+            heroi.dinheiro -= parte.preco;
+            heroi.defesa += parte.defesa;
+            heroi.itens.partesArmadura[parte.nome] = true;
+
+            log(`Você comprou a ${parte.nome}. Defesa +${parte.defesa}.`);
+            atualizarTela();
+            atualizarTextoBotaoArmadura();  // Atualiza o nome do botão
+            return;
+        }
+    }
+
+    log("Você já comprou todas as partes da armadura.");
+}
+
+function atualizarTextoBotaoArmadura() {
+    const botao = document.getElementById('botao-armadura');
+
+    for (let parte of partesOrdem) {
+        if (!heroi.itens.partesArmadura[parte.nome]) {
+            botao.innerText = `Comprar ${parte.nome} (${parte.preco}g, +${parte.defesa} DEF)`;
+            botao.disabled = false;
+            return;
+        }
+    }
+
+    botao.innerText = "Armadura completa!";
+    botao.disabled = true;
+}
 
 
 // ==============================
@@ -441,70 +426,55 @@ function ativarMissao(tipo) {
 //--------------------------- resete do heroi ---------------------
 
 function resetarHeroi() {
-    // --- RESETAR O ESTADO DO HERÓI PARA SEUS VALORES INICIAIS ---
-    heroi = {
-        nome: "Herói",
-        vida: 100,
-        ataque: 10,
-        defesa: 5,
-        dinheiro: 0,
-        xp: 0,
-        nivel: 1,
-        monstrosDerrotados: 0,
-        criaturasDerrotadas: [],   // Resetar criaturas ancestrais derrotadas
-        vilasReconstruidas: [],    // Resetar vilas reconstruídas
-        itens: {
-            espada: false,
-            escudo: false,
-            armadura: false,
-            partesArmaduraCompradas: 0,
-            arco: false,
-            reforco: false,
-            sorte: false,
-            escudoDivino: false,
-            artefato: false,
-            derrotouChefao: false,  // Resetar esta flag para 'false'
-            pocoes: 0,
-            elixires: 0
+    // Reinicia os dados do herói manualmente
+    heroi.nome = "Herói";
+    heroi.vida = 100;
+    heroi.ataque = 10;
+    heroi.defesa = 5;
+    heroi.dinheiro = 0;
+    heroi.xp = 0;
+    heroi.nivel = 1;
+    heroi.monstrosDerrotados = 0;
+    heroi.segundoHeroi = false;
+
+    heroi.itens = {
+        espada: false,
+        escudo: false,
+        armadura: false,
+        partesArmadura: {
+            bota: false,
+            calca: false,
+            capacete: false,
+            peitoral: false
         },
-        segundoHeroi: false // Resetar se o segundo herói está ativo
+        arco: false,
+        reforco: false,
+        sorte: false,
+        escudoDivino: false,
+        artefato: false,
+        derrotouChefao: false,
+        pocoes: 0,
+        elixires: 0
     };
 
-    // --- RESETAR O ESTADO DAS VILAS PARA SEUS VALORES INICIAIS ---
-    // Recrie o array de vilas para garantir que todos os dados sejam resetados.
+    // Reinicia vilas também
+    numeroDaVila = 0;
+    heroi.vilaAtual = 0;
     vilas = [
-        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] }, // Vila 1
-        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] }, // Vila 2
-        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] }  // Vila 3
-        // Certifique-se de que todas as suas vilas iniciais estejam aqui com seus valores padrão.
+        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] },
+        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] },
+        { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] }
     ];
 
-    // --- RESETAR OUTRAS VARIÁVEIS DE ESTADO DO JOGO RELACIONADAS AO PROGRESSO ---
-    numeroDaVila = 0; // Começa sempre na Vila 1
-    criaturaAncestralAtiva = false; // Garante que nenhum combate ancestral esteja ativo
-    vidaCriaturaAncestral = 0;      // Reseta a vida de qualquer criatura ancestral
-
-    // Assegurar que as variáveis do chefão final estão resetadas:
-    chefaoFinalAtivo = false;       // Garante que o chefão final não está ativo no início
-    vidaChefaoFinal = 0;         // Reseta a vida do chefão final para o seu valor MÁXIMO/INICIAL
-    // (Ajuste 1000 para a vida inicial real do seu Monstro Original)
-
-    missaoAtiva = null;
-    progressoMissao = 0;
-    trilha = document.getElementById('trilha');
-    mensagemTemploMostrada = false;
-    jogoFoiCarregado = false;
-    criaturaAncestralEncontrada = false;  // ✅ NOVO - já encontrou alguma vez
+    criaturaAncestralAtiva = false;
+    criaturaAncestralEncontrada = false;
     chefesDerrotados = 0;
-    document.getElementById('numero-vila').innerText = numeroDaVila;
-    vilaAtual = vilas[numeroDaVila];
+    chefaoFinalAtivo = false;
 
-    // Se você tiver uma variável global 'temploRevelado' ou outras flags de progresso, zere-as aqui:
-    // temploRevelado = false;
-
-    // ---------------------- invetario ----------------------
-
+    atualizarTela();
 }
+
+// ----------------------------- inventario ------------------------
 
 function toggleInventario() {
     inventarioAberto = !inventarioAberto;
@@ -515,14 +485,20 @@ function toggleInventario() {
 function atualizarInventarioVisual() {
     const inventarioMenu = document.getElementById('inventario-menu');
     if (!inventarioMenu || inventarioMenu.style.display === 'none') {
-        return; // Não atualiza se o menu não estiver visível ou o elemento não existir
+        return;
     }
 
     document.getElementById('inventario-pocoes').textContent = heroi.itens.pocoes;
     document.getElementById('inventario-elixires').textContent = heroi.itens.elixires;
     document.getElementById('inventario-espada').textContent = heroi.itens.espada ? 'Sim' : 'Não';
     document.getElementById('inventario-escudo').textContent = heroi.itens.escudo ? 'Sim' : 'Não';
-    document.getElementById('inventario-armadura').textContent = heroi.itens.armadura ? 'Sim' : 'Não';
+
+    // Atualiza as partes da armadura
+    const partes = heroi.itens.partesArmadura;
+    document.getElementById('inventario-bota').textContent = partes.bota ? 'Sim' : 'Não';
+    document.getElementById('inventario-calca').textContent = partes.calca ? 'Sim' : 'Não';
+    document.getElementById('inventario-capacete').textContent = partes.capacete ? 'Sim' : 'Não';
+    document.getElementById('inventario-peitoral').textContent = partes.peitoral ? 'Sim' : 'Não';
 }
 
 // ---------------------- Sistema de Evolução ----------------------
@@ -581,12 +557,13 @@ function lutar() {
             log("Você derrotou o Monstro Original! Sua missão está completa.");
             voltarAoMenu();
             setTimeout(() => {
+                mudarCenario('imagens/vila.jpg');
                 voltarAoMenu();
             }, 5000);
             setTimeout(() => {
                 alert("Fim do jogo! Você salvou todas as vilas e derrotou o criador dos monstros.");
                 resetarHeroi();
-            }, 5000);
+            }, 6000);
             chefaoFinalAtivo = false;
             return;
         }
@@ -1088,10 +1065,11 @@ function transformarEmMonstro() {
     document.getElementById('melhorar-vila').style.display = 'none';
 
     document.getElementById('botao-transformar').style.display = 'none';
-    voltarAoMenu();
 
     setTimeout(() => {
         resetarHeroi();
+        mudarCenario('imagens/vila.jpg');
+        voltarAoMenu();
         alert("Final alternativo: Você se tornou um monstro.");
     }, 5000);
 }
@@ -1286,3 +1264,5 @@ function carregarJogo() {
         log("⚠️ Nenhum jogo salvo encontrado.");
     }
 }
+
+
