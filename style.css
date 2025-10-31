@@ -87,7 +87,7 @@ body {
 }
 
 .discord-button {
-    background-color: #7289DA;
+    background-color: #db1717;
     /* Cor de fundo do Discord */
     color: white;
     padding: 10px 20px;
@@ -102,10 +102,17 @@ body {
     /* Um pouco mais escuro ao passar o mouse */
 }
 
+#cartaz-miniboss h3,
+#cartaz-miniboss p {
+    margin-bottom: 10px;
+    /* espaço entre cada linha */
+}
+
 /* Log e status */
 #log,
 #game-text {
-    max-height: 250px;
+    min-height: 210px;
+    max-height: 210px;
     /* Limita a altura visível */
     overflow-y: auto;
     /* Permite rolar verticalmente */
@@ -115,15 +122,14 @@ body {
     margin-bottom: 10px;
     border-radius: 8px;
     overflow-y: auto;
-    height: 50%;
 }
 
 /* Botões genéricos */
 button {
-    padding: 10px;
-    margin: 3px;
+    padding: 8px;
+    margin: 2px;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     background-color: #444;
     color: white;
     cursor: pointer;
@@ -164,11 +170,11 @@ button:hover {
 
 /* Status da vila */
 #vila-status {
-    margin-top: 10px;
+    margin-top: 9px;
     background-color: rgba(0, 0, 0, 0.5);
     color: #ccc;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 9px;
+    border-radius: 7px;
 }
 
 /* Títulos e parágrafos */
@@ -201,4 +207,28 @@ p {
 
 #btnVoltar {
     width: 292px;
+}
+
+#bruxa {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border: 2px solid #7e57c2;
+    border-radius: 10px;
+}
+
+#bruxa button {
+    margin: 5px;
+    padding: 10px;
+    background: #6a1b9a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.cartaz {
+    border: 2px solid #444;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: rgba(255, 255, 255, 0.8);
 }

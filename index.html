@@ -3,14 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>THE LAST HERO</title>
+  <title>O último herói</title>
   <link rel="stylesheet" href="style.css">
   <!-- Descrição do site -->
   <meta name="description"
-    content="THE LAST HERO é um jogo onde você reconstrói vilas, enfrenta diferentes tipos de monstros e descobre uma incrível historia.">
+    content="O último herói é um jogo onde você derrota as criaturas ancestrais salvando e reconstruindo vilas.(é um jogo de texto)">
 
   <!-- Palavras-chave para SEO -->
-  <meta name="keywords" content="jogo de aventura, rpg, herói, the last hero">
+  <meta name="keywords" content="jogo de aventura, rpg, herói, O último herói">
 
   <!-- Autor do site -->
   <meta name="author" content="Marcos">
@@ -20,25 +20,65 @@
 
   <!-- Tela inicial -->
   <div id="tela-inicial">
-    <h1>THE LAST HERO</h1>
+    <h1> O último herói</h1>
     <button id="btn-jogar" onclick="iniciarJogo()">Jogar</button>
     <button id="btn-novo-jogo" onclick="novoJogo()" style="display: none;">Novo Jogo</button>
     <button onclick="carregarJogo()">Carregar Jogo</button>
     <button onclick="salvarJogo()">Salvar Jogo</button>
+    <button onclick="abrirConfiguracoes()">Configurações</button>
     <button onclick="mostrarCreditos()">Créditos</button>
-    <p> THE LAST HERO (beta 1.9) </p>
+    <button onclick="fecharJogo()">Sair do Jogo</button>
+    <p> O último herói (1.0) </p>
+    <p> 2025 </p>
   </div>
 
   <!-- Créditos -->
   <div id="creditos" style="display: none;">
     <h2>Créditos</h2>
     <p>Desenvolvido por [Marcos]</p>
-    <p>Acesse nosso discord</p>
-    <a href="https://discord.gg/KsFE2p4d" class="discord-button">
-      Entrar no Servidor Discord
+    <p>Veja o video do jogo</p>
+    <a href="" class="discord-button" target="_blank">
+      ver video
     </a>
     <button onclick="voltarAoMenu()">Voltar ao Menu</button>
   </div>
+
+  <div id="configuracoes" style="display: none; position: absolute; top: 50%; left: 50%;
+transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; border-radius: 10px; z-index: 999;">
+    <h3>Configurações de Atalhos</h3>
+    <p>as teclas 1, 2 e 3 são atalhos para os cenarios vila, floresta e caverna.</p>
+    <button onclick="fecharConfiguracoes()">Fechar</button>
+  </div>
+
+  <script>
+
+    function controlarCenariosPelaTecla(teclaPressionada) {
+      switch (teclaPressionada) {
+        case '1':
+          console.log("Teclas '1' OK. Ação: Mudar para a vila.");
+          // Descomente a linha abaixo quando tiver certeza
+          mudarCenario('imagens/vila.jpg');
+          break;
+        case '2':
+          console.log("Teclas '2' OK. Ação: Mudar para a floresta.");
+          mudarCenario('imagens/floresta.jpg');
+          break;
+        case '3':
+          console.log("Teclas '3' OK. Ação: Mudar para a caverna.");
+          mudarCenario('imagens/caverna.jpg');
+          break;
+        default:
+          console.log("Nenhuma ação mapeada para a tecla: " + teclaPressionada);
+          break;
+      }
+    }
+
+    document.addEventListener('keydown', function (event) {
+      // Apenas para ter certeza de que a função é chamada
+      controlarCenariosPelaTecla(event.key);
+    });
+
+  </script>
 
   <!-- Cenario de fundo -->
   <div id="cenario" style="display: none;"></div>
@@ -70,22 +110,50 @@
         <div id="combate" style="display: none;">
           <p><strong>Combate</strong></p>
           <button onclick="lutar()">Lutar</button>
-          <button onclick="descansar()">Descansar</button>
+        </div>
+
+        <button id="botao-cartazes" onclick="abrirCartazesMiniBoss()" style="display: none;">📜 Ver Cartazes de
+          Procurado</button>
+        <!-- Cartaz de Mini Boss -->
+        <div id="cartaz-miniboss"
+          style="display: none; background: #fffbe6; border: 3px solid #333; padding: 20px; width: 320px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 999; border-radius: 10px; box-shadow: 0 0 10px black;">
+
+          <h3>Cartaz de Procurado</h3>
+
+          <h3>Nome: <span id="nome-miniboss"></span></h3> <!-- agora só esse tem o id -->
+
+          <p><b>Descrição:</b> <span id="descricao-miniboss"></span></p>
+          <p><b>Nível Recomendado:</b> <span id="nivel-recomendado"></span></p>
+          <p><b>Recompensa:</b> <span id="recompensa-miniboss"></span> moedas</p>
+
+          <button onclick="confirmarCombateMiniBoss()">Enfrentar</button>
+          <button onclick="fecharCartaz()">❌ Fechar</button>
         </div>
 
         <!-- Loja -->
         <div id="loja" style="display: none;">
           <p><strong>Loja</strong></p>
-          <button onclick="comprarItem('espada')">Comprar Espada (20g)</button>
-          <button onclick="comprarItem('escudo')">Comprar Escudo (25g)</button>
-          <button onclick="comprarItem('pocao')">Comprar Poção (10g)</button>
+          <button id="botao-comprar-espada" onclick="comprarItem('espada')">Comprar Espada</button>
+          <button id="botao-comprar-escudo" onclick="comprarItem('escudo')">Comprar Escudo</button>
+          <button onclick="comprarItem('pocao')">Comprar Poção (10 moedas)</button>
         </div>
 
         <!-- Blackmarket -->
         <div id="blackmarket" style="display: none;">
           <p><strong>Blackmarket</strong></p>
-          <button onclick="comprarItemBlack('elixir')">Comprar Elixir (50g)</button>
+          <button onclick="comprarItemBlack('elixir')">Comprar Elixir (50 moedas)</button>
           <button id="botao-armadura" onclick="comprarProximaParteArmadura()">Comprar Armadura</button>
+        </div>
+
+        <div id="bruxa" style="display: none; margin: 10px;">
+          <h3>Bruxa Encantadora 🔮</h3>
+          <p>Use 1 cristal e 10 moedas para encantar seus equipamentos.</p>
+
+          <div>
+            <button onclick="encantar('ataque')">Encantar Ataque (Cristais: <span id="cristal-ataque">0</span>)</button>
+            <button onclick="encantar('defesa')">Encantar Defesa (Cristais: <span id="cristal-defesa">0</span>)</button>
+            <button onclick="encantar('vida')">Encantar Vida (Cristais: <span id="cristal-vida">0</span>)</button>
+          </div>
         </div>
 
         <!-- Missões -->
@@ -120,6 +188,24 @@
               <span class="item-desenho">🛡️</span> <span class="item-nome">Escudo:</span> <span
                 id="inventario-escudo">Não</span>
             </div>
+            <div class="item-inventario">
+              <span class="item-nome">Capivara:</span> <span id="status-capivara">Não recrutada</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-nome">Monstro Amigo:</span> <span id="status-monstro-amigo">Não recrutado</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">🔴</span> <span class="item-nome">Cristais de Ataque:</span>
+              <span id="inventario-cristal-ataque">0</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">🔵</span> <span class="item-nome">Cristais de Defesa:</span>
+              <span id="inventario-cristal-defesa">0</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">💚</span> <span class="item-nome">Cristais de Vida:</span>
+              <span id="inventario-cristal-vida">0</span>
+            </div>
 
             <!-- Armadura por partes -->
             <div class="item-inventario">
@@ -150,13 +236,6 @@
           <button onclick="descansar()">Descansar</button>
         </div>
 
-        <!-- Melhorar vila -->
-        <div id="melhorar-vila" style="display: none;">
-          <p><strong>Melhoria</strong></p>
-          <button onclick="melhorarVila()">Melhorar Vila</button>
-          <button onclick="descansar()">Descansar</button>
-        </div>
-
         <!-- Sacrifício -->
         <div id="sacrificio" style="display: none;">
           <p><strong>Sacrifício</strong></p>
@@ -164,9 +243,17 @@
           <button onclick="sacrificar('defesa')">+1 Defesa</button>
         </div>
 
+        <!-- Melhorar vila -->
+        <div id="melhorar-vila" style="display: none;">
+          <p><strong>Melhoria</strong></p>
+          <button onclick="melhorarVila()">Melhorar Vila</button>
+          <button onclick="descansar()">Descansar</button>
+        </div>
+
         <!-- Status da vila -->
         <div id="vila-status" style="display: none;">
           <p><strong>Status da Vila</strong></p>
+          <p id="nome-vila-exibido"></p>
           <p>Nível: <span id="nivel-vila">0</span></p>
           <p>Madeira: <span id="madeira">0</span></p>
           <p>Pedra: <span id="pedra">0</span></p>
@@ -181,11 +268,16 @@
         <div id="game-text"></div>
         <div id="log"></div>
         <button onclick="toggleInventario()">Inventário</button>
+        <div id="time-status" style="margin: 10px; display: flex; gap: 10px; font-size: 2rem;"></div>
+        <h3>Time</h3>
+        <ul id="lista-time"></ul>
       </div>
     </div>
+  </div>
+  </div>
 
-    <!-- Botão central de transformação -->
-    <button id="botao-transformar" onclick="transformarEmMonstro()" style="
+  <!-- Botão central de transformação -->
+  <button id="botao-transformar" onclick="transformarEmMonstro()" style="
       display: none;
       position: fixed;
       top: 50%;
@@ -201,18 +293,18 @@
       z-index: 1000;
     ">Transformar-se em Monstro</button>
 
-    <!-- Áudio -->
-    <audio id="trilha" loop>
-      <source src="audio/musica.mp3" type="audio/mpeg">
-      Seu navegador não suporta áudio.
-    </audio>
+  <!-- Áudio -->
+  <audio id="trilha" loop>
+    <source src="audio/musica.mp3" type="audio/mpeg">
+    Seu navegador não suporta áudio.
+  </audio>
 
-    <script src="game.js" defer></script>
-    <script>
-      window.onload = () => {
-        atualizarBotoesTelaInicial();
-      };
-    </script>
+  <script src="game.js" defer></script>
+  <script>
+    window.onload = () => {
+      atualizarBotoesTelaInicial();
+    };
+  </script>
 
   </div>
 
