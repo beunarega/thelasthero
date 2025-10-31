@@ -326,6 +326,10 @@ function controlarCenariosPelaTecla(teclaPressionada) {
         case '3':
             mudarCenario('imagens/caverna.jpg');
             break;
+        case '4':
+            console.log("Teclas '4' OK. Ação: Mudar para a tela inicial.");
+            voltarAoMenu();
+            break;
         default:
             break;
     }
@@ -2084,5 +2088,5 @@ function carregarJogo() {
 }
 
 function fecharJogo() {
-    window.open('', '_self').close(); // Tenta fechar a aba
+    window.location.href = "https://www.google.com"; // Substitua pelo seu link
 }

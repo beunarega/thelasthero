@@ -36,17 +36,18 @@
   <div id="creditos" style="display: none;">
     <h2>Créditos</h2>
     <p>Desenvolvido por [Marcos]</p>
-    <p>Veja o video do jogo</p>
-    <a href="" class="discord-button" target="_blank">
-      ver video
-    </a>
-    <button onclick="voltarAoMenu()">Voltar ao Menu</button>
+    <p>Entre no nosso grupo do discord com o convite abaixo.
+    <p>
+      <a href="https://discord.gg/TyZN3BdEb3" class="discord-button" target="_blank">
+        aceitar convite
+      </a>
+      <button onclick="voltarAoMenu()">Voltar ao Menu</button>
   </div>
 
   <div id="configuracoes" style="display: none; position: absolute; top: 50%; left: 50%;
 transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; border-radius: 10px; z-index: 999;">
     <h3>Configurações de Atalhos</h3>
-    <p>as teclas 1, 2 e 3 são atalhos para os cenarios vila, floresta e caverna.</p>
+    <p>as teclas 1, 2, 3 e 4 são atalhos para os cenarios vila, floresta, caverna e menu.</p>
     <button onclick="fecharConfiguracoes()">Fechar</button>
   </div>
 
@@ -55,17 +56,17 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
     function controlarCenariosPelaTecla(teclaPressionada) {
       switch (teclaPressionada) {
         case '1':
-          console.log("Teclas '1' OK. Ação: Mudar para a vila.");
-          // Descomente a linha abaixo quando tiver certeza
           mudarCenario('imagens/vila.jpg');
           break;
         case '2':
-          console.log("Teclas '2' OK. Ação: Mudar para a floresta.");
           mudarCenario('imagens/floresta.jpg');
           break;
         case '3':
-          console.log("Teclas '3' OK. Ação: Mudar para a caverna.");
           mudarCenario('imagens/caverna.jpg');
+          break;
+        case '4':
+          console.log("Teclas '4' OK. Ação: Mudar para a tela inicial.");
+          voltarAoMenu();
           break;
         default:
           console.log("Nenhuma ação mapeada para a tecla: " + teclaPressionada);
