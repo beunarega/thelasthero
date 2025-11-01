@@ -204,7 +204,7 @@ function voltarAoMenu() {
     document.getElementById('jogo').style.display = 'none';
     document.getElementById('cenario').style.display = 'none';
     document.getElementById('creditos').style.display = 'none';
-    document.getElementById('tela-inicial').style.display = 'block';
+    document.getElementById('tela-inicial').style.display = 'flex';
     document.getElementById('log').innerHTML = '';
     document.getElementById('botao-transformar').style.display = 'none';
     atualizarBotoesTelaInicial();
@@ -453,7 +453,7 @@ function atualizarAcoesEspecificas() {
         document.getElementById('sacrificio').style.display = 'none';
     }
 
-    if (vilaAtual.nivel >= 1 && numeroDaVila === 0 && !mostrouCartazes && cenarioAtual === 'vila') {
+    if (vilaAtual.nivel >= 1 && numeroDaVila === 0 && !mostrouCartazes) {
         document.getElementById('botao-cartazes').style.display = (cenarioAtual === 'vila' && vilaAtual.nivel >= 1) ? 'block' : 'none';
         mostrouCartazes = true;
         log('Derrepente durante as construções você encontra um conjunto de cartazes.');
@@ -861,7 +861,7 @@ function resetarHeroi() {
     criaturaAncestralEncontrada = false;
     chefesDerrotados = 0;
     chefaoFinalAtivo = false;
-    mostrouCartazes = true;
+    mostrouCartazes = false;
 
     // 🔄 Reinicia o time
     time = {
