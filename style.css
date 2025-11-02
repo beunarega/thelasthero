@@ -102,6 +102,29 @@ body {
     /* Um pouco mais escuro ao passar o mouse */
 }
 
+#codigo-container {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    /* Espaço entre o campo e o botão */
+}
+
+#input-codigo {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-family: inherit;
+    /* Garante a mesma fonte dos botões */
+}
+
+#input-codigo::placeholder {
+    color: #777;
+}
+
 #cartaz-miniboss h3,
 #cartaz-miniboss p {
     margin-bottom: 10px;

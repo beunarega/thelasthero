@@ -36,7 +36,8 @@ let heroi = {
         derrotouChefao: false,  // Marca se o chefão final foi vencido
         pocoes: 0,
         elixires: 0
-    }
+    },
+    codigosResgatados: {}
 };
 
 let vilas = [
@@ -220,7 +221,8 @@ function atualizarBotoesTelaInicial() {
         heroi.nivel > 1 ||
         heroi.xp > 0 ||
         heroi.dinheiro > 0 ||
-        numeroDaVila > 0;
+        numeroDaVila > 0 ||
+        (heroi.codigosResgatados && Object.keys(heroi.codigosResgatados).length > 0);
 
     jogar.style.display = temProgresso ? 'inline-block' : 'none';
     novoJogo.style.display = 'inline-block';
@@ -349,6 +351,79 @@ function abrirConfiguracoes() {
 
 function fecharConfiguracoes() {
     document.getElementById('configuracoes').style.display = 'none';
+}
+
+// ------------------------- sistema de codigos ---------------------------
+
+function resgatarCodigo() {
+    const inputElement = document.getElementById('input-codigo');
+    if (!inputElement) return; // Segurança
+
+    const codigo = inputElement.value.toLowerCase().trim();
+
+    // Inicializa o objeto se não existir (Movido para o topo para mais segurança)
+    if (!heroi.codigosResgatados) {
+        heroi.codigosResgatados = {};
+    }
+
+    if (codigo === 'medico') {
+        // Verifica se o código já foi resgatado
+        if (heroi.codigosResgatados.medico) {
+            alert('Erro: O código "medico" já foi resgatado.');
+            inputElement.value = '';
+            return;
+        }
+
+        // Aplica a recompensa
+        heroi.itens.pocoes += 10;
+        heroi.itens.elixires += 10;
+        // Marca o código como resgatado
+        heroi.codigosResgatados.medico = true;
+
+        alert('Código "medico" resgatado!\n\nVocê recebeu:\n+ 10 Poções\n+ 10 Elixires');
+
+        salvarJogo();
+        atualizarBotoesTelaInicial();
+
+    } else if (codigo === 'elon musk') { // <-- BLOCO NOVO
+        if (heroi.codigosResgatados.elonmusk) { // Usamos 'elonmusk' como a chave
+            alert('Erro: O código "elon musk" já foi resgatado.');
+            inputElement.value = '';
+            return;
+        }
+
+        heroi.dinheiro += 999999;
+        heroi.codigosResgatados.elonmusk = true;
+
+        alert('Código "elon musk" resgatado!\n\nVocê recebeu:\n+ 999.999 Dinheiro');
+
+        salvarJogo();
+        atualizarBotoesTelaInicial(); // Vai funcionar por causa da nossa correção no Passo 1
+
+    } else if (codigo === 'heroi') { // <-- BLOCO NOVO
+        if (heroi.codigosResgatados.heroi) {
+            alert('Erro: O código "heroi" já foi resgatado.');
+            inputElement.value = '';
+            return;
+        }
+
+        heroi.ataque += 10;
+        heroi.defesa += 10;
+        heroi.codigosResgatados.heroi = true;
+
+        alert('Código "heroi" resgatado!\n\nVocê recebeu:\n+ 10 Ataque\n+ 10 Defesa');
+
+        salvarJogo();
+        atualizarBotoesTelaInicial(); // Vai funcionar por causa da nossa correção no Passo 1
+
+    } else if (codigo === '') {
+        alert('Por favor, digite um código.');
+    } else {
+        alert('Código inválido. Tente novamente.');
+    }
+
+    // Limpa o campo de texto
+    inputElement.value = '';
 }
 
 // ---------------------- Atualizações de Interface ----------------------
@@ -838,6 +913,8 @@ function resetarHeroi() {
         pocoes: 0,
         elixires: 0
     };
+
+    heroi.codigosResgatados = {};
 
     // Reinicia vilas também
     numeroDaVila = 0;
@@ -2057,6 +2134,10 @@ function carregarJogo() {
 
     numeroDaVila = obj.numeroDaVila ?? 0;
     cenarioAtual = obj.cenario || 'vila';
+
+    if (!heroi.codigosResgatados) {
+        heroi.codigosResgatados = {};
+    }
 
     // Criaturas Ancestrais e Chefão
     criaturaAncestralAtiva = obj.criaturaAncestralAtiva || false;
