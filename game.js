@@ -33,6 +33,8 @@ let heroi = {
         sorte: false,           // Nível 4: Sorte ativada
         escudoDivino: false,    // Nível 5: Chance de evitar dano
         artefato: false,        // Artefato Lendário
+        artefatoAtaque: false,
+        artefatoVida: false,
         derrotouChefao: false,  // Marca se o chefão final foi vencido
         pocoes: 0,
         elixires: 0
@@ -41,9 +43,9 @@ let heroi = {
 };
 
 let vilas = [
-    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 } }, // Vila 1
-    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 } }, // Vila 2
-    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 } }  // Vila 3
+    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, monstrosDerrotados: 0 }, // Vila 1
+    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, monstrosDerrotados: 0 }, // Vila 2
+    { nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, monstrosDerrotados: 0 }  // Vila 3
 ];
 
 const nomeDasVilas = {
@@ -150,7 +152,8 @@ let jogoEstaRodando = true;
 var mostrouCartazes = false;
 let ataqueOriginal = null;
 let defesaOriginal = null;
-let acharCristais = false
+let acharCristais = false;
+let usouModoGrinding = false;
 
 // ---------------------- Funções de Navegação ----------------------
 
@@ -317,8 +320,9 @@ function mudarCenario(imagem, logar = true) {
 
 //-------------------- sistema de atalhos -----------------------------//
 
-function controlarCenariosPelaTecla(teclaPressionada) {
-    switch (teclaPressionada) {
+
+function controlarCenariosPelaTecla(event) { // MUDADO
+    switch (event.key) { // MUDADO
         case '1':
             mudarCenario('imagens/vila.jpg');
             break;
@@ -329,13 +333,29 @@ function controlarCenariosPelaTecla(teclaPressionada) {
             mudarCenario('imagens/caverna.jpg');
             break;
         case '4':
-            console.log("Teclas '4' OK. Ação: Mudar para a tela inicial.");
             voltarAoMenu();
             break;
+        case 'Tab': // NOVO
+            event.preventDefault(); // Impede o navegador de trocar de foco
+            toggleInventario();
+            break;
         default:
+            console.log("Nenhuma ação mapeada para a tecla: " + event.key);
             break;
     }
 }
+
+document.addEventListener('keydown', function (event) {
+    // Apenas para ter certeza de que a função é chamada
+    controlarCenariosPelaTecla(event); // MUDADO
+});
+
+
+
+document.addEventListener('keydown', function (event) {
+    // Apenas para ter certeza de que a função é chamada
+    controlarCenariosPelaTecla(event); // MUDADO para event
+});
 
 document.addEventListener('keydown', function (event) {
     // Apenas para ter certeza de que a função é chamada
@@ -909,6 +929,8 @@ function resetarHeroi() {
         sorte: false,
         escudoDivino: false,
         artefato: false,
+        artefatoAtaque: false,
+        artefatoVida: false,
         derrotouChefao: false,
         pocoes: 0,
         elixires: 0
@@ -921,9 +943,9 @@ function resetarHeroi() {
     heroi.vilaAtual = 0;
 
     vilas = [
-        { nome: "Aldebaram", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] },
-        { nome: "Vanjag", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] },
-        { nome: "ReverBlo", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [] }
+        { nome: "Aldebaram", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [], monstrosDerrotados: 0 },
+        { nome: "Vanjag", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [], monstrosDerrotados: 0 },
+        { nome: "ReverBlo", nivel: 0, materiais: { madeira: 0, pedra: 0, ferro: 0 }, bonus: [], monstrosDerrotados: 0 }
     ];
 
     cristais = {
@@ -933,6 +955,8 @@ function resetarHeroi() {
     };
 
     miniBossDerrotados = [];
+
+    usouModoGrinding = false;
 
     criaturaAncestralAtiva = false;
     criaturaAncestralEncontrada = false;
@@ -1055,6 +1079,8 @@ function lutar() {
         defesaTotal += time.paiLendario.defesa;
     }
 
+
+
     // ⚔️ Combate final contra o Criador
     if (chefaoFinalAtivo) {
         vidaChefaoFinal -= ataqueTotal;
@@ -1069,6 +1095,22 @@ function lutar() {
         if (vidaChefaoFinal <= 0) {
             mudarCenario('imagens/vila.jpg');
             log("Você derrotou o Monstro Original! Sua missão está completa.");
+
+            if (usouModoGrinding) {
+                log("Você salvou o mundo da ameaça, mas as vilas que deixou para trás nunca foram reconstruídas.");
+                log("Seu pai o observa de longe, mas não se junta a você. A sua jornada foi solitária.");
+                log("(Final Mediano)");
+                chefaoFinalAtivo = false;
+                atualizarBotoesTelaInicial();
+                setTimeout(() => {
+                    alert("Fim do jogo! Você salvou o mundo, mas não restaurou as vilas.");
+                    voltarAoMenu();
+                    resetarHeroi();
+                    atualizarBotoesTelaInicial();
+                }, 20000);
+                return; // Sai antes de dar o pai
+            }
+
             desbloqueouPai = true;
             time.paiLendario = {
                 nome: "Guerreiro Lendário (pai)",
@@ -1088,7 +1130,7 @@ function lutar() {
                 voltarAoMenu();
                 resetarHeroi();
                 atualizarBotoesTelaInicial();
-            }, 15000);
+            }, 20000);
             chefaoFinalAtivo = false;
             atualizarBotoesTelaInicial();
             return;
@@ -1218,8 +1260,8 @@ function lutar() {
                 miniBossAtual.debuffAplicado = true;
 
                 // Calcula quanto será reduzido
-                let novoAtaque = Math.max(1, Math.floor(ataqueHeroiTurno * 0.6));
-                let novaDefesa = Math.max(0, Math.floor(defesaHeroiTurno * 0.6));
+                let novoAtaque = Math.max(1, Math.floor(ataqueHeroiTurno * 0.8));
+                let novaDefesa = Math.max(0, Math.floor(defesaHeroiTurno * 0.8));
 
                 let perdeuAtaque = ataqueHeroiTurno - novoAtaque;
                 let perdeuDefesa = defesaHeroiTurno - novaDefesa;
@@ -1362,6 +1404,29 @@ function lutar() {
         heroi.xp += Math.floor(Math.random() * 3) + heroi.nivel;
         heroi.monstrosDerrotados++;
 
+        const vilaParaGrinding = vilas[numeroDaVila];
+        if (vilaParaGrinding) {
+            vilaParaGrinding.monstrosDerrotados = (vilaParaGrinding.monstrosDerrotados || 0) + 1;
+
+            // Checa a condição de 150 mortes
+            if (vilaParaGrinding.monstrosDerrotados >= 150 && numeroDaVila < vilas.length - 1) {
+                log("☠️ Você dizimou as criaturas desta área tantas vezes que a própria terra o rejeita...");
+                log("Você avança, mas deixa a vila para trás, sem reconstruí-la.");
+                usouModoGrinding = true; // Marca que o final mediano será ativado
+
+                // Usamos a função avancarParaProximaVila() que já existe
+                avancarParaProximaVila();
+
+                // Reseta a contagem para não disparar de novo
+                vilaParaGrinding.monstrosDerrotados = 0;
+
+                // Pula o resto da função de lutar
+                atualizarTela();
+                verificarNivel();
+                return;
+            }
+        }
+
         log(`Você lutou e recebeu ${danoRecebido} de dano.`);
 
         if (missaoAtiva === 'caverna') {
@@ -1434,19 +1499,7 @@ function lutar() {
             }
 
             if (chefesDerrotados >= 3) {
-                log("Você sente uma energia sombria... O Criador está vindo.");
-                chefaoFinalAtivo = true;
-                vidaChefaoFinal = 500;
-                log("De repente você é informado de que um grande mal voltou à sua vila natal.");
-                log("🕯️ Um mal ancestral desperta... A caverna da vila natal o aguarda.");
-                log("⚔️ Volte à caverna da vila natal para enfrentar o Criador.");
-                setTimeout(() => {
-                    numeroDaVila = 0; // Redefine para a vila natal 
-                    vilaAtual.nivel == 0;
-                    heroi.itens.derrotouChefao = false;
-                    mudarCenario('imagens/vila.jpg');
-                    atualizarVilaStatus();
-                }, 15000);
+                ativarChefaoFinal();
             }
 
             aoDerrotarCriaturaAncestral();
@@ -1564,8 +1617,27 @@ function explorar() {
     if (chance < 0.02 && !heroi.itens.artefato && vila.nivel >= 2) {
         heroi.itens.artefato = true;
         heroi.defesa += 3;
-        log("Você encontrou o Artefato Lendário escondido na floresta! Defesa +3.");
+        log("Você encontrou o Artefato azul Lendário escondido na floresta! Defesa +3.");
         encontrouMaterialOuArtefato = true;
+    }
+
+    // Artefato de Ataque (NOVO)
+    else if (chance < 0.04 && !heroi.itens.artefatoAtaque && vila.nivel >= 2) {
+        heroi.itens.artefatoAtaque = true;
+        heroi.ataque += 3;
+        log("Você encontrou o Artefato verde Lendário escondido na floresta! Ataque +3.");
+        encontrouMaterialOuArtefato = true;
+        atualizarTela();
+    }
+
+    // Artefato de Vida (NOVO)
+    else if (chance < 0.06 && !heroi.itens.artefatoVida && vila.nivel >= 2) {
+        heroi.itens.artefatoVida = true;
+        heroi.vidaMaxima += 20;
+        heroi.vida = heroi.vidaMaxima; // Cura
+        log("Você encontrou o Artefato Lendário vermelho escondido na floresta! Vida Máxima +20.");
+        encontrouMaterialOuArtefato = true;
+        atualizarTela();
     }
 
     else if (chance < 0.12) {
@@ -1875,7 +1947,7 @@ function ajustarVolume(valor) {
 }
 
 function narrativaVilaNivel2() {
-    log("Enquanto a vila cresce, você encontra inscrições antigas: um artefato lendário está escondido na floresta...");
+    log("Enquanto a vila cresce, você encontra inscrições antigas: três artefatos lendários estão escondidos pela floresta...");
 }
 
 function narrativaVilaNivel3() {
@@ -1891,6 +1963,25 @@ function narrativaVilaNivel5() {
 }
 
 // --- FUNÇÃO VERIFICARFINAL---
+
+function ativarChefaoFinal() {
+    log("Você sente uma energia sombria... O Criador está vindo.");
+    chefaoFinalAtivo = true;
+    vidaChefaoFinal = 5000;
+    log("De repente você é informado de que um grande mal voltou à sua vila natal.");
+    log("🕯️ Um mal ancestral desperta... A caverna da vila natal o aguarda.");
+    log("⚔️ Volte à caverna da vila natal para enfrentar o Criador.");
+
+    // Mudei para 5 segundos para testes, pode voltar para 20000 se quiser
+    setTimeout(() => {
+        numeroDaVila = 0; // Redefine para a vila natal
+        // A linha 'vilaAtual.nivel == 0;' no seu código original não fazia nada e foi removida.
+        heroi.itens.derrotouChefao = false;
+        mudarCenario('imagens/vila.jpg');
+        atualizarVilaStatus();
+    }, 20000); // 5 segundos
+}
+
 function verificarFinal() {
     if (heroi.itens.derrotouChefao) {
         if (numeroDaVila < vilas.length - 1) {
@@ -1917,11 +2008,26 @@ function verificarFinal() {
                 atualizarVilaStatus();
                 aplicarBeneficiosVilaAtual();
                 atualizarAcoesEspecificas();
-            }, 15000);
+            }, 20000);
+
+
+
         } else {
-            log("🎉 Parabéns! Você derrotou a última Criatura Ancestral e restaurou todas as vilas.");
-            log("Agora, um desafio final o aguarda...");
-            desbloquearCombateFinal();
+            // Este bloco é chamado ao derrotar a criatura da ÚLTIMA vila.
+            log("🎉 Parabéns! Você derrotou a Criatura Ancestral final.");
+
+            // AQUI ESTÁ O SEU TESTE:
+            // Se o jogador usou o "grinding" para pular vilas...
+            if (usouModoGrinding) {
+                log("O caminho que você trilhou o leva direto ao fim...");
+                ativarChefaoFinal(); // Invoca o chefe imediatamente!
+            } else {
+                // Se for o caminho normal, a ativação do chefe já aconteceu em lutar()
+                // (no Passo 2 que fizemos). Apenas mostramos a mensagem final.
+                log("Você restaurou todas as vilas e derrotou todos os Ancestrais.");
+                log("Agora, um desafio final o aguarda...");
+                // Não precisamos fazer nada, o chefe já foi ativado.
+            }
         }
     }
 }
@@ -1984,7 +2090,7 @@ function avancarParaProximaVila() {
             aplicarBeneficiosVilaAtual(); // Aplica bônus, se a nova vila já tiver algum nível
             atualizarAcoesEspecificas();
 
-        }, 15000); // 15 segundos (15000 milissegundos) de atraso. Ajuste conforme necessário.
+        }, 20000); // 20 segundos (20000 milissegundos) de atraso. Ajuste conforme necessário.
 
     } else {
         // Se todas as vilas foram desbloqueadas, lida com o chefão final
@@ -2101,7 +2207,8 @@ function salvarJogo() {
         missaoAtiva,
         progressoMissao,
         miniBossIndex,
-        miniBossDerrotados
+        miniBossDerrotados,
+        usouModoGrinding
     };
 
     localStorage.setItem('saveGame', JSON.stringify(dados));
@@ -2138,6 +2245,8 @@ function carregarJogo() {
     if (!heroi.codigosResgatados) {
         heroi.codigosResgatados = {};
     }
+
+    usouModoGrinding = obj.usouModoGrinding || false;
 
     // Criaturas Ancestrais e Chefão
     criaturaAncestralAtiva = obj.criaturaAncestralAtiva || false;
