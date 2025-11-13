@@ -1,5 +1,6 @@
 let cenarioAtual = 'vila';
 let desbloqueouPai = false;
+let desbloqueouMae = false;
 
 let heroi = {
     nome: "Herói",
@@ -35,6 +36,8 @@ let heroi = {
         artefato: false,        // Artefato Lendário
         artefatoAtaque: false,
         artefatoVida: false,
+        sementeConsciencia: false,
+        pocaoPurificadora: false,
         derrotouChefao: false,  // Marca se o chefão final foi vencido
         pocoes: 0,
         elixires: 0
@@ -75,7 +78,8 @@ let time = {
     heroiSecundario: null,  // Ativado ao evoluir vila 2
     capivara: null,
     monstroAmigo: null,
-    paiLendario: null
+    paiLendario: null,
+    maeLendaria: null
 };
 
 const miniBosses = [
@@ -115,10 +119,10 @@ const miniBosses = [
     {
         id: "guardiaoFinal",
         nome: "Guardião Final",
-        vida: '5000',
-        ataque: '1029',
-        defesa: '888',
-        recompensa: '1000',
+        vida: 5000,
+        ataque: 1029,
+        defesa: 888,
+        recompensa: 1000,
         tipo: "guardiaoFinal",
         nivelRecomendado: '???',
         descricao: "O último protetor do Criador. Só pode ser vencido com o Guerreiro Lendário ao seu lado."
@@ -154,7 +158,11 @@ let ataqueOriginal = null;
 let defesaOriginal = null;
 let acharCristais = false;
 let usouModoGrinding = false;
-let conquistas = { finalRuim: false, finalMediano: false, finalBom: false };
+let conquistas = { finalRuim: false, finalMediano: false, finalBom: false, finalVerdadeiro: false };
+let bruxaRevelouSegredo = false;
+let apocalipseAtivo = false;
+let monstroDaFloresta = false;
+let subClasse = null;
 
 // ---------------------- Funções de Navegação ----------------------
 
@@ -199,9 +207,40 @@ function novoJogo() {
         return;
     }
 
-    log("🌟 Novo jogo iniciado.");
-    resetarHeroi();          // 1. Reseta tudo (nome volta para "Herói")
-    heroi.nome = nome.trim(); // 2. Define o novo nome que o usuário digitou
+    // ▼▼ ADICIONE ESTE BLOCO DE ESCOLHA ▼▼
+    let escolha = prompt(
+        "Escolha sua Sub-Classe (digite 1, 2 ou 3):\n\n" +
+        "1. Construtor Profissional (Melhoria de vila mais barata)\n" +
+        "2. Explorador Profissional (Sempre encontra algo na floresta)\n" +
+        "3. Aprendiz Mestre (Ganha o dobro de status por nível)",
+        "0"
+    );
+
+    resetarHeroi(); // 1. Reseta tudo
+    heroi.nome = nome.trim(); // 2. Define o nome
+
+    // 3. Define a sub-classe
+    switch (escolha) {
+        case '1':
+            subClasse = 'construtor';
+            log("Você é um Construtor Profissional!");
+            break;
+        case '2':
+            subClasse = 'explorador';
+            log("Você é um Explorador Profissional!");
+            break;
+        case '3':
+            subClasse = 'aprendiz';
+            log("Você é um Aprendiz Mestre!");
+            break;
+        default:
+            subClasse = null; // Nenhuma sub-classe
+            log("Você escolheu seguir seu próprio caminho, sem especialização.");
+            break;
+    }
+    // ▲▲ FIM DO BLOCO ADICIONADO ▲▲
+
+    log(`🌟 Novo jogo iniciado para ${heroi.nome}!`);
 
     atualizarTela();
     iniciarJogo();
@@ -350,7 +389,7 @@ function controlarCenariosPelaTecla(event) { // MUDADO
             toggleInventario();
             break;
         default:
-            console.log("Nenhuma ação mapeada para a tecla: " + event.key);
+            console.log();
             break;
     }
 }
@@ -446,6 +485,26 @@ function resgatarCodigo() {
         salvarJogo();
         atualizarBotoesTelaInicial(); // Vai funcionar por causa da nossa correção no Passo 1
 
+    } else if (codigo === 'totodile') {
+        if (heroi.codigosResgatados.totodile) {
+            alert('Erro: O código "totodile" já foi resgatado.');
+            inputElement.value = '';
+            return;
+        }
+        if (time.maeLendaria) {
+            alert('Erro: Você já tem a Guerreira Lendária (mãe) no seu time.');
+            inputElement.value = '';
+            return;
+        }
+
+        heroi.codigosResgatados.totodile = true;
+        desbloqueouMae = true; // Flag para persistir no reset
+        adicionarMaeLendaria();
+
+        alert('Código "totodile" resgatado!\n\nA Guerreira Lendária (mãe) se juntou ao seu time!');
+
+        salvarJogo();
+        atualizarBotoesTelaInicial();
     } else if (codigo === '') {
         alert('Por favor, digite um código.');
     } else {
@@ -462,6 +521,7 @@ function resgatarCodigo() {
 function mostrarConquistas() {
     let lista = "🏆 Suas Conquistas 🏆\n\n";
 
+    lista += conquistas.finalVerdadeiro ? "✅ Final Verdadeiro: O Pacificador\n" : "❌ Final Verdadeiro: O Pacificador\n";
     lista += conquistas.finalBom ? "✅ Final Bom: O Salvador\n" : "❌ Final Bom: O Salvador\n";
     lista += conquistas.finalMediano ? "✅ Final Mediano: O Executor\n" : "❌ Final Mediano: O Executor\n";
     lista += conquistas.finalRuim ? "✅ Final Ruim: O Monstro\n" : "❌ Final Ruim: O Monstro\n";
@@ -564,6 +624,13 @@ function atualizarAcoesEspecificas() {
     document.getElementById('melhorar-vila').style.display = exibirMelhorar ? 'block' : 'none';
     document.getElementById('bruxa').style.display = (cenarioAtual === 'floresta' && numeroDaVila === 1 && vilaAtual.nivel >= 3) ? 'block' : 'none';
 
+    const botaoBruxaHistoria = document.getElementById('botao-bruxa-historia');
+    if (desbloqueouPai && cenarioAtual === 'floresta' && numeroDaVila === 1 && vilaAtual.nivel >= 3) {
+        botaoBruxaHistoria.style.display = 'block';
+    } else {
+        botaoBruxaHistoria.style.display = 'none';
+    }
+
     // Correção aqui: usando a vila correta para checar nível
     if (numeroDaVila === 0 && cenarioAtual === 'vila' && vilaAtual.nivel >= 3) {
         document.getElementById('sacrificio').style.display = 'block';
@@ -650,6 +717,56 @@ function atualizarTextoBotaoArmadura() {
     botao.disabled = true;
 }
 
+// ==============================
+// 🚨 Evento Apocalipse
+// ==============================
+
+function iniciarApocalipse() {
+    apocalipseAtivo = true;
+    log("🚨 O CÉU FICA VERMELHO! 🚨");
+    log("Uma horda de monstros avança! É o apocalipse!");
+    log("LUTE PELA SUA VIDA!");
+
+    // Força o cenário de combate
+    setTimeout(() => {
+
+        mudarCenario('imagens/caverna.jpg');
+        log(`Derrepente você ${heroi.nome} percebe que è o único que esta na carverna para lutar... Lute!`);
+
+
+    }, 10000);
+
+    // Esconde todos os outros botões de navegação
+    document.getElementById('btnVoltar').style.display = 'none';
+    document.getElementById('btn-nav-vila').style.display = 'none';
+    document.getElementById('btn-nav-floresta').style.display = 'none';
+    document.getElementById('btn-nav-caverna').style.display = 'none';
+    document.getElementById('btn-inventario').style.display = 'none';
+
+    // O mudarCenario() já escondeu loja, missoes, etc.
+    // E já mostrou o #combate com o botão "Lutar".
+
+    // Inicia o timer
+    setTimeout(terminarApocalipse, 60000); // 60000ms = 1 minuto
+}
+
+function terminarApocalipse() {
+    if (!apocalipseAtivo) return; // Se já foi cancelado, não faz nada
+
+    apocalipseAtivo = false;
+    log("☀️ A horda recua... O céu clareia. Você sobreviveu.");
+
+    // Mostra os botões de volta
+    document.getElementById('btnVoltar').style.display = 'block';
+    document.getElementById('btn-nav-vila').style.display = 'block';
+    document.getElementById('btn-nav-floresta').style.display = 'block';
+    document.getElementById('btn-nav-caverna').style.display = 'block';
+    document.getElementById('btn-inventario').style.display = 'block';
+
+    // Retorna à vila para segurança
+    mudarCenario('imagens/vila.jpg');
+}
+
 //---------------------------- time ------------------------------
 
 function adicionarCapivara() {
@@ -689,7 +806,21 @@ function adicionarPaiLendario() {
         defesa: 999,
         tipo: 'lendario'
     };
-    log("🧑‍🦳 Um Guerreiro Lendário se juntou ao seu pai!");
+    log("🧑‍🦳 Um Guerreiro Lendário se juntou ao seu time!");
+    salvarJogo();
+    atualizarPainelTime();
+    atualizarTimeVisual();
+}
+
+function adicionarMaeLendaria() {
+    time.maeLendaria = {
+        nome: "Guerreira Lendária (mãe)",
+        vida: 999,
+        ataque: 999,
+        defesa: 999,
+        tipo: 'lendario'
+    };
+    log("👩‍🦳 Uma Guerreira Lendária (mãe) se juntou ao seu time!");
     salvarJogo();
     atualizarPainelTime();
     atualizarTimeVisual();
@@ -749,6 +880,13 @@ function atualizarTimeVisual() {
         const span = document.createElement("span");
         span.textContent = "🧑‍🦳";
         span.title = "Guerreiro Lendário (pai)";
+        timeDiv.appendChild(span);
+    }
+
+    if (time.maeLendaria) {
+        const span = document.createElement("span");
+        span.textContent = "👩‍🦳"; // Emoji de mulher com cabelo branco
+        span.title = "Guerreira Lendária (mãe)";
         timeDiv.appendChild(span);
     }
 
@@ -956,6 +1094,8 @@ function resetarHeroi() {
         artefato: false,
         artefatoAtaque: false,
         artefatoVida: false,
+        sementeConsciencia: false,
+        pocaoPurificadora: false,
         derrotouChefao: false,
         pocoes: 0,
         elixires: 0
@@ -987,17 +1127,27 @@ function resetarHeroi() {
     criaturaAncestralEncontrada = false;
     chefesDerrotados = 0;
     chefaoFinalAtivo = false;
+
     mostrouCartazes = false;
+    bruxaRevelouSegredo = false;
+    apocalipseAtivo = false;
+    subClasse = null;
 
     // 🔄 Reinicia o time
     time = {
         heroiSecundario: null,
         capivara: null,
         monstroAmigo: null,
-        paiLendario: null
+        paiLendario: null,
+        maeLendaria: null
     };
+
     if (desbloqueouPai) {
         adicionarPaiLendario(); // garante que ele continue no novo jogo
+    }
+
+    if (desbloqueouMae) {
+        adicionarMaeLendaria();
     }
 
     atualizarTimeVisual();
@@ -1047,9 +1197,24 @@ function verificarNivel() {
     if (heroi.xp >= xpParaProximoNivel) {
         heroi.xp -= xpParaProximoNivel;
         heroi.nivel++;
-        heroi.ataque += 2;
-        heroi.defesa += 1;
-        heroi.vidaMaxima += 5;
+
+        // ▼▼ ADICIONADO: Lógica de ganho de status ▼▼
+        let ganhoAtaque = 2;
+        let ganhoDefesa = 1;
+        let ganhoVida = 5;
+
+        if (subClasse === 'aprendiz') {
+            ganhoAtaque *= 2; // 4
+            ganhoDefesa *= 2; // 2
+            ganhoVida *= 2;   // 10
+            log("✨ Sua maestria acelera seu aprendizado!");
+        }
+
+        heroi.ataque += ganhoAtaque;
+        heroi.defesa += ganhoDefesa;
+        heroi.vidaMaxima += ganhoVida;
+        // ▲▲ FIM DA ADIÇÃO ▲▲
+
         heroi.vida = heroi.vidaMaxima;
         log(`Parabéns! Você ${heroi.nome} subiu para o nível ${heroi.nivel}!`);
         atualizarTela();
@@ -1103,6 +1268,10 @@ function lutar() {
         ataqueTotal += time.paiLendario.ataque;
         defesaTotal += time.paiLendario.defesa;
     }
+    if (time.maeLendaria) {
+        ataqueTotal += time.maeLendaria.ataque;
+        defesaTotal += time.maeLendaria.defesa;
+    }
 
 
 
@@ -1119,8 +1288,20 @@ function lutar() {
 
         if (usouModoGrinding) {
             log(`Você ${heroi.nome} salvou o mundo da ameaça, mas as vilas que deixou para trás nunca foram reconstruídas.`);
-            log(`Seu pai o observa de longe, mas não se junta a você ${heroi.nome}. A sua jornada foi solitária.`);
+
+            if (time.paiLendario) {
+                log("O Guerreiro Lendário desaparece, desapontado com sua escolha...");
+            } else {
+                log(`Seu pai o observa de longe, mas não se junta a você ${heroi.nome}. A sua jornada foi solitária.`);
+            }
+
             log("(Final Mediano)");
+
+            time.paiLendario = null;     // 1. Remove o pai do time atual
+            desbloqueouPai = false;   // 2. Impede que ele volte no Novo Jogo
+            atualizarTimeVisual();
+            atualizarPainelTime();
+
             conquistas.finalMediano = true;
             chefaoFinalAtivo = false;
             atualizarBotoesTelaInicial();
@@ -1131,6 +1312,34 @@ function lutar() {
                 atualizarBotoesTelaInicial();
             }, 20000);
             return; // Sai antes de dar o pai
+        }
+
+        if (heroi.itens.pocaoPurificadora) {
+            log("🌿 Você usa a Poção da Purificação no coração do Criador...");
+            log("Uma luz ofuscante preenche a caverna. A forma monstruosa se dissolve...");
+            log("No lugar, resta um espírito de luz, livre da sua dor.");
+            log("Os espíritos ancestrais das outras vilas também são libertados.");
+            log("Bruxa (em sua mente): 'Você curou o mundo, Herói. Não pela espada, mas pela compaixão.'");
+            log("(Final Verdadeiro - O Pacificador)");
+
+            conquistas.finalVerdadeiro = true; // Pode criar uma nova conquista se quiser
+            desbloqueouPai = true; // Garante o pai
+
+            if (!time.paiLendario) {
+                log("Seu pai, vendo sua compaixão, junta-se a você como um guardião.");
+                adicionarPaiLendario();
+                atualizarTimeVisual();
+                atualizarPainelTime();
+            }
+            chefaoFinalAtivo = false;
+            atualizarBotoesTelaInicial();
+            setTimeout(() => {
+                alert(`Fim do jogo! Você ${heroi.nome} curou o mundo e trouxe a verdadeira paz.`);
+                voltarAoMenu();
+                resetarHeroi();
+                atualizarBotoesTelaInicial();
+            }, 25000);
+            return; // Sai da função
         }
 
         if (vidaChefaoFinal <= 0) {
@@ -1472,7 +1681,7 @@ function lutar() {
 
     if (heroi.itens.sorte && heroi.monstrosDerrotados >= 10) {
         heroi.monstrosDerrotados = 0;
-        heroi.dinheiro += 20;
+        heroi.dinheiro += 10;
         log("Sua sorte o recompensou! Ganhou dinheiro extra.");
     }
 
@@ -1558,6 +1767,39 @@ function lutar() {
     atualizarTimeVisual();
 }
 
+// ==============================
+// 🔮 Lógica da Bruxa (Final Verdadeiro)
+// ==============================
+function falarComBruxaSobreCriador() {
+    if (!desbloqueouPai) return; // Segurança
+
+    log("🔮 A Bruxa olha para você, seus olhos parecem ver sua alma...");
+    log("Bruxa: 'Você... você já esteve no fim. Você viu o que ele é.'");
+    log("Bruxa: 'O Criador, como o chamam, não era um monstro. Ele era um... protetor.'");
+    log("Bruxa: 'Há eras, ele e seus \"ancestrais\" eram espíritos da natureza, guardiões do equilíbrio.'");
+    log("Bruxa: 'Mas os humanos... seus ancestrais... eles temeram esse poder. Eles o corromperam, o prenderam, o transformaram nessa fúria cega.'");
+    log("Bruxa: 'O que você luta não é o mal. É a dor.'");
+
+    if (heroi.itens.pocaoPurificadora) {
+        log("Bruxa: 'A Poção da Purificação está com você. Use-a... mostre a ele o perdão.'");
+        return;
+    }
+
+    if (heroi.itens.sementeConsciencia) {
+        log("Bruxa: 'Você... você encontrou! A Semente da Consciência!'");
+        log("Bruxa: 'Rápido, me dê!'");
+        log("A Bruxa mistura a semente com ervas raras e sussurra palavras antigas...");
+        log("Bruxa: 'Aqui está. A Poção da Purificação.'");
+        log("Bruxa: 'Quando enfrentar o Criador, o poder desta poção o libertará. A ele, e aos ancestrais.'");
+        heroi.itens.pocaoPurificadora = true;
+        heroi.itens.sementeConsciencia = false; // Consome a semente
+    } else {
+        log("Bruxa: 'É possível curá-lo. Libertá-lo da sua dor.'");
+        log("Bruxa: 'Mas eu preciso de um item de poder puro, algo que a floresta escondeu.'");
+        log("Bruxa: 'Procure pela Semente da Consciência. Dizem que um Guardião Ancestral a protege na floresta.'");
+        bruxaRevelouSegredo = true;
+    }
+}
 
 function encantar(tipo) {
 
@@ -1596,6 +1838,7 @@ function encantar(tipo) {
     atualizarInventarioVisual();
 }
 
+// ---------------------- Sistema de Ações 2----------------------
 
 function sacrificar(tipo) {
     const vilaAtual = vilas[numeroDaVila];
@@ -1642,6 +1885,12 @@ function explorar() {
     let chance = Math.random();
     let encontrouMaterialOuArtefato = false;
 
+    let chanceApocalipse = Math.random();
+    if (desbloqueouPai && !apocalipseAtivo && chanceApocalipse < 0.01) { // 1%
+        iniciarApocalipse();
+        return; // Para a função explorar aqui
+    }
+
     if (chance < 0.02 && !heroi.itens.artefato && vila.nivel >= 2) {
         heroi.itens.artefato = true;
         heroi.defesa += 3;
@@ -1659,13 +1908,60 @@ function explorar() {
     }
 
     // Artefato de Vida (NOVO)
-    else if (chance < 0.06 && !heroi.itens.artefatoVida && vila.nivel >= 2) {
+    else if (chance < 0.06 && !heroi.itens.artefatoVida && !monstroDaFloresta && vila.nivel >= 2) {
         heroi.itens.artefatoVida = true;
         heroi.vidaMaxima += 20;
         heroi.vida = heroi.vidaMaxima; // Cura
         log(`Você ${heroi.nome} encontrou o Artefato Lendário verde escondido na floresta! Vida Máxima +20.`);
         encontrouMaterialOuArtefato = true;
         atualizarTela();
+    } else if (chance < 0.09 && desbloqueouPai && bruxaRevelouSegredo && !heroi.itens.sementeConsciencia) {
+        log("🌳 Um Guardião Ancestral da Floresta bloqueia seu caminho!");
+        log("Ele protege algo... A luta começa!");
+
+        // Lógica de combate (baseada na sua luta da floresta)
+        let defesaTotal = heroi.defesa;
+        if (time.heroiSecundario) defesaTotal += time.heroiSecundario.defesa;
+        if (time.capivara) defesaTotal += time.capivara.defesa;
+        if (time.monstroAmigo) defesaTotal += time.monstroAmigo.defesa;
+        if (time.paiLendario) defesaTotal += time.paiLendario.defesa;
+        if (time.maeLendaria) defesaTotal += time.maeLendaria.defesa;
+
+        let danoBoss = Math.max(0, (20 + heroi.nivel * 2) - defesaTotal); // Boss é forte
+        heroi.vida -= danoBoss;
+        log(`O Guardião ataca! Você ${heroi.nome} recebeu ${danoBoss} de dano.`);
+
+        if (heroi.vida <= 0) {
+            // Lógica de morte (copiada da sua função 'explorar')
+            log("Você foi derrotado pelo Guardião...");
+            if (heroi.itens.elixires > 0) {
+                heroi.itens.elixires--;
+                heroi.vida = Math.floor(heroi.vidaMaxima * 0.5);
+                log("Usou um Elixir! Vida restaurada.");
+            } else {
+                let perdaDinheiro = Math.floor(heroi.dinheiro * 0.5);
+                let perdaXP = Math.min(5, heroi.xp);
+                heroi.dinheiro -= perdaDinheiro;
+                heroi.xp -= perdaXP;
+                log(`Você ${heroi.nome} morreu! Perdeu ${perdaDinheiro} moedas e ${perdaXP} XP.`);
+                mudarCenario('imagens/vila.jpg');
+                atualizarTela();
+                return; // Sai da função explorar
+            }
+        } else {
+            // Herói vence
+            log(`Você ${heroi.nome} revida com força total e derrota o Guardião!`);
+            log("O Guardião tomba e deixa cair algo... 🌿");
+            log("Você obteve a Semente da Consciência!");
+
+            monstroDaFloresta = true;
+            heroi.itens.sementeConsciencia = true;
+            heroi.xp += 50;
+            heroi.dinheiro += 100;
+        }
+        encontrouMaterialOuArtefato = true; // Para não encontrar madeira, etc.
+        atualizarTela();
+        verificarNivel();
     }
 
     else if (chance < 0.12) {
@@ -1683,6 +1979,9 @@ function explorar() {
         }
         if (time.paiLendario) {
             defesaTotal += time.paiLendario.defesa;
+        }
+        if (time.maeLendaria) {
+            defesaTotal += time.maeLendaria.defesa;
         }
         // ▲▲ FIM DO BLOCO ADICIONADO ▲▲
 
@@ -1735,8 +2034,8 @@ function explorar() {
 
         if (heroi.itens.sorte && heroi.monstrosDerrotados >= 10) {
             heroi.monstrosDerrotados = 0;
-            heroi.dinheiro += 20;
-            log("Sua sorte te deu 20 moedas extras!");
+            heroi.dinheiro += 10;
+            log("Sua sorte te deu 10 moedas extras!");
         }
 
     }
@@ -1781,7 +2080,15 @@ function explorar() {
     }
 
     else {
-        log(`Você ${heroi.nome} não encontrou nada...`);
+        if (subClasse === 'explorador') {
+            // Explorador sempre encontra algo (ex: madeira)
+            vila.materiais.ferro += 1;
+            log(`Sua perícia de explorador o impede de voltar de mãos vazias. Você ${heroi.nome} encontrou uma ferro raro.`);
+            encontrouMaterialOuArtefato = true;
+        } else {
+            // Jogador normal
+            log(`Você ${heroi.nome} não encontrou nada...`);
+        }
     }
 
     if (missaoAtiva === 'floresta' && encontrouMaterialOuArtefato) {
@@ -1930,6 +2237,19 @@ function atualizarNomeVila() {
 function melhorarVila() {
     const dados = vilas[numeroDaVila];
 
+    // ▼▼ ADICIONADO: Define os custos dinamicamente ▼▼
+    let custoMadeira = 5;
+    let custoPedra = 5;
+    let custoFerro = 2;
+
+    if (subClasse === 'construtor') {
+        custoMadeira = 3;
+        custoPedra = 3;
+        custoFerro = 1;
+        log("Sua habilidade de construtor reduz os custos.");
+    }
+    // ▲▲ FIM DA ADIÇÃO ▲▲
+
     // Calcula o nível de herói necessário com base na vila
     let nivelNecessarioHeroi;
     if (numeroDaVila === 0) { // Vila 1 (índice 0)
@@ -1939,14 +2259,14 @@ function melhorarVila() {
     } else if (numeroDaVila === 2) { // Vila 3 (índice 2)
         nivelNecessarioHeroi = dados.nivel * 4; // Triplo do nível da vila
     } else {
-        // Fallback para qualquer outra vila, caso você adicione mais no futuro
         nivelNecessarioHeroi = dados.nivel;
     }
 
+    // ▼▼ MODIFICADO: Usa as variáveis de custo ▼▼
     if (
-        dados.materiais.madeira >= 5 &&
-        dados.materiais.pedra >= 5 &&
-        dados.materiais.ferro >= 2 &&
+        dados.materiais.madeira >= custoMadeira &&
+        dados.materiais.pedra >= custoPedra &&
+        dados.materiais.ferro >= custoFerro &&
         heroi.nivel > nivelNecessarioHeroi // Nova condição de nível do herói
     ) {
         let limite;
@@ -1963,9 +2283,10 @@ function melhorarVila() {
         }
 
         dados.nivel++;
-        dados.materiais.madeira -= 5;
-        dados.materiais.pedra -= 5;
-        dados.materiais.ferro -= 2;
+        dados.materiais.madeira -= custoMadeira;
+        dados.materiais.pedra -= custoPedra;
+        dados.materiais.ferro -= custoFerro;
+        // ▲▲ FIM DA MODIFICAÇÃO ▲▲
 
         log(`🛠️ A vila de ${nomeVila(numeroDaVila)} evoluiu para o nível ${dados.nivel}.`);
 
@@ -1981,8 +2302,8 @@ function melhorarVila() {
             if (dados.nivel === 5) narrativaVilaNivel5();
         }
     } else {
-        // Mensagem de erro atualizada para refletir o novo requisito de nível
-        log(`❌ Requisitos: 5 Madeira, 5 Pedra, 2 Ferro, e estar em nível ${nivelNecessarioHeroi + 1} ou superior.`);
+        // ▼▼ MODIFICADO: Mensagem de erro usa variáveis de custo ▼▼
+        log(`❌ Requisitos: ${custoMadeira} Madeira, ${custoPedra} Pedra, ${custoFerro} Ferro, e estar em nível ${nivelNecessarioHeroi + 1} ou superior.`);
     }
 }
 
@@ -2064,7 +2385,7 @@ function verificarFinal() {
             // AQUI ESTÁ O SEU TESTE:
             // Se o jogador usou o "grinding" para pular vilas...
             if (usouModoGrinding) {
-                log(`O caminho que você ${heroi.nome} trilhou o leva direto ao fim..."`);
+                log(`O caminho que você ${heroi.nome} trilhou o leva direto ao fim...`);
                 ativarChefaoFinal(); // Invoca o chefe imediatamente!
             } else {
                 // Se for o caminho normal, a ativação do chefe já aconteceu em lutar()
@@ -2257,7 +2578,11 @@ function salvarJogo() {
         miniBossIndex,
         miniBossDerrotados,
         usouModoGrinding,
-        conquistas
+        conquistas,
+        bruxaRevelouSegredo,
+        desbloqueouMae,
+        apocalipseAtivo,
+        subClasse
     };
 
     localStorage.setItem('saveGame', JSON.stringify(dados));
@@ -2295,8 +2620,15 @@ function carregarJogo() {
         heroi.codigosResgatados = {};
     }
 
+    if (!heroi.itens.sementeConsciencia) heroi.itens.sementeConsciencia = false;
+    if (!heroi.itens.pocaoPurificadora) heroi.itens.pocaoPurificadora = false;
+
     usouModoGrinding = obj.usouModoGrinding || false;
-    conquistas = obj.conquistas || { finalRuim: false, finalMediano: false, finalBom: false };
+    conquistas = obj.conquistas || { finalRuim: false, finalMediano: false, finalBom: false, finalVerdadeiro: false };
+    bruxaRevelouSegredo = obj.bruxaRevelouSegredo || false;
+    desbloqueouMae = obj.desbloqueouMae || false;
+    apocalipseAtivo = obj.apocalipseAtivo || false;
+    subClasse = obj.subClasse || null;
 
     // Criaturas Ancestrais e Chefão
     criaturaAncestralAtiva = obj.criaturaAncestralAtiva || false;
@@ -2311,6 +2643,18 @@ function carregarJogo() {
     progressoMissao = obj.progressoMissao || 0;
     miniBossIndex = obj.miniBossIndex || 0;
     miniBossDerrotados = obj.miniBossDerrotados || [];
+
+    if (apocalipseAtivo) {
+        log("⚠️ O apocalipse de monstros recuou enquanto você estava fora.");
+        apocalipseAtivo = false;
+    }
+
+    // Garante que os botões estejam visíveis ao carregar
+    document.getElementById('btnVoltar').style.display = 'block';
+    document.getElementById('btn-nav-vila').style.display = 'block';
+    document.getElementById('btn-nav-floresta').style.display = 'block';
+    document.getElementById('btn-nav-caverna').style.display = 'block';
+    document.getElementById('btn-inventario').style.display = 'block';
 
 
     // Atualizações gerais
