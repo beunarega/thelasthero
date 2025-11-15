@@ -319,3 +319,69 @@ p {
     min-height: 80px;
     /* Altura mínima para parecer uma "área" */
 }
+
+#tela-slots {
+    display: none;
+    /* Começa escondida */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('imagens/tela-inicial.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: 10;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: white;
+}
+
+#tela-slots h2 {
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#tela-slots>button {
+    /* Botão "Voltar ao Menu Principal" */
+    margin-top: 20px;
+}
+
+.slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 8px;
+    width: 600px;
+    /* Um pouco mais largo */
+    max-width: 90%;
+}
+
+.slot-item p {
+    font-size: 1.2em;
+    margin: 0;
+    flex-grow: 1;
+    /* Faz o texto ocupar o espaço */
+}
+
+.slot-botoes {
+    display: flex;
+    gap: 10px;
+    /* Espaço entre os botões */
+    margin-left: 20px;
+}
+
+.slot-botoes button {
+    margin: 0;
+    /* Remove margem padrão */
+}
+
+/* Botão de deletar com cor de perigo */
+.slot-botoes button[onclick*="deletar"] {
+    background-color: #b71c1c;
+    /* Vermelho escuro */
+}

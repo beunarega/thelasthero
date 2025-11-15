@@ -163,6 +163,7 @@ let bruxaRevelouSegredo = false;
 let apocalipseAtivo = false;
 let monstroDaFloresta = false;
 let subClasse = null;
+let slotAtual = null;
 
 // ---------------------- Funções de Navegação ----------------------
 
@@ -199,51 +200,41 @@ function iniciarJogo() {
     startGame();
 }
 
-function novoJogo() {
+function novoJogo(slot) {
     const nome = prompt("Qual é o nome do seu herói?", "Herói");
+    if (nome === null || nome.trim() === "") return;
 
-    // Se o usuário cancelar ou não digitar nada, a função para.
-    if (nome === null || nome.trim() === "") {
-        return;
-    }
-
-    // ▼▼ ADICIONE ESTE BLOCO DE ESCOLHA ▼▼
     let escolha = prompt(
         "Escolha sua Sub-Classe (digite 1, 2 ou 3):\n\n" +
-        "1. Construtor Profissional (Melhoria de vila mais barata)\n" +
-        "2. Explorador Profissional (Sempre encontra algo na floresta)\n" +
-        "3. Aprendiz Mestre (Ganha o dobro de status por nível)",
+        "1. Construtor Profissional\n" +
+        "2. Explorador Profissional\n" +
+        "3. Aprendiz Mestre",
         "0"
     );
 
     resetarHeroi(); // 1. Reseta tudo
     heroi.nome = nome.trim(); // 2. Define o nome
+    slotAtual = slot; // 3. Define o slot ATIVO
 
-    // 3. Define a sub-classe
+    // 4. Define a sub-classe
     switch (escolha) {
-        case '1':
-            subClasse = 'construtor';
-            log("Você é um Construtor Profissional!");
-            break;
-        case '2':
-            subClasse = 'explorador';
-            log("Você é um Explorador Profissional!");
-            break;
-        case '3':
-            subClasse = 'aprendiz';
-            log("Você é um Aprendiz Mestre!");
-            break;
-        default:
-            subClasse = null; // Nenhuma sub-classe
-            log("Você escolheu seguir seu próprio caminho, sem especialização.");
-            break;
+        case '1': subClasse = 'construtor'; break;
+        case '2': subClasse = 'explorador'; break;
+        case '3': subClasse = 'aprendiz'; break;
+        default: subClasse = null; break;
     }
-    // ▲▲ FIM DO BLOCO ADICIONADO ▲▲
 
-    log(`🌟 Novo jogo iniciado para ${heroi.nome}!`);
+    // 5. Salva o novo jogo imediatamente para "ocupar" o slot
+    salvarJogo();
+    log(`🌟 Novo jogo iniciado para ${heroi.nome} no Slot ${slot}!`);
+    if (subClasse) log(`Sua classe é: ${subClasse}`);
 
-    atualizarTela();
+    // 6. Esconde a tela de slots e inicia o jogo
+    document.getElementById('tela-slots').style.display = 'none';
     iniciarJogo();
+
+    // Atualiza a UI
+    atualizarTela();
     atualizarTimeVisual();
     atualizarPainelTime();
 }
@@ -258,6 +249,7 @@ function voltarAoMenu() {
     document.getElementById('cenario').style.display = 'none';
     document.getElementById('creditos').style.display = 'none';
     document.getElementById('conquistas-tela').style.display = 'none';
+    document.getElementById('tela-slots').style.display = 'none';
     document.getElementById('tela-inicial').style.display = 'flex';
     document.getElementById('log').innerHTML = '';
     document.getElementById('botao-transformar').style.display = 'none';
@@ -533,7 +525,7 @@ function abrirTelaConquistas() {
 }
 
 function hintFinalVerdadeiro() {
-    alert("Dica: O Final Verdadeiro requer o 'Novo Jogo+'.\n\nFale com a Bruxa em Vanjag (Vila 2), encontre o item que ela pede na floresta e use a poção resultante no Criador.");
+    alert("Dica: O Final Verdadeiro requer o Novo Jogo depois de ter pego o final bom.\n\nFale com a Bruxa em Vanjag (Vila 2), encontre o item que ela pede na floresta e use a poção resultante no Criador.");
 }
 
 function hintFinalBom() {
@@ -1173,6 +1165,8 @@ function resetarHeroi() {
     atualizarTela();
     atualizarBotoesTelaInicial();
     atualizarPainelTime();
+
+    slotAtual = null;
 }
 // ----------------------------- inventario ------------------------
 
@@ -1239,6 +1233,42 @@ function verificarNivel() {
         // ▲▲ FIM DA ADIÇÃO ▲▲
 
         heroi.vida = heroi.vidaMaxima;
+
+        const ganhoVidaAliado = 5;
+        const ganhoAtaqueAliado = 1;
+        const ganhoDefesaAliado = 1;
+        let mensagemAliados = ""; // Para mostrar uma única mensagem de log
+
+        // 1. Sobe o nível do Herói Secundário (se ele existir)
+        if (time.heroiSecundario) {
+            time.heroiSecundario.vida += ganhoVidaAliado;
+            time.heroiSecundario.ataque += ganhoAtaqueAliado;
+            time.heroiSecundario.defesa += ganhoDefesaAliado;
+            mensagemAliados += "🧑‍🤝‍🧑 Herói Secundário | ";
+        }
+
+        // 2. Sobe o nível da Capivara (se ela existir)
+        if (time.capivara) {
+            time.capivara.vida += ganhoVidaAliado;
+            time.capivara.ataque += ganhoAtaqueAliado;
+            time.capivara.defesa += ganhoDefesaAliado;
+            mensagemAliados += "🦫 Capivara | ";
+        }
+
+        // 3. Sobe o nível do Monstro Amigo (se ele existir)
+        if (time.monstroAmigo) {
+            time.monstroAmigo.vida += ganhoVidaAliado;
+            time.monstroAmigo.ataque += ganhoAtaqueAliado;
+            time.monstroAmigo.defesa += ganhoDefesaAliado;
+            mensagemAliados += "👹 Monstro Amigo | ";
+        }
+
+        // Se algum aliado subiu de nível, avise o jogador e atualize o painel
+        if (mensagemAliados !== "") {
+            log(`Seus aliados ficaram mais fortes: ${mensagemAliados}`);
+            atualizarPainelTime(); // <-- IMPORTANTE: Atualiza a lista de status do time
+        }
+
         log(`Parabéns! Você ${heroi.nome} subiu para o nível ${heroi.nivel}!`);
         atualizarTela();
 
@@ -2579,6 +2609,12 @@ function enfrentarMonstroOriginal() {
 // ---------------------- Sistema de Salvamento ----------------------
 
 function salvarJogo() {
+    // Se nenhum slot estiver ativo (ex: jogo novo não salvo), não faz nada
+    if (slotAtual === null) {
+        log("⚠️ Não é possível salvar. Inicie um Novo Jogo ou Carregue um slot primeiro.");
+        return;
+    }
+
     // Garante que cada vila tenha um array de bônus
     vilas.forEach((vila, i) => {
         if (!vila.bonus) vilas[i].bonus = [];
@@ -2606,17 +2642,82 @@ function salvarJogo() {
         desbloqueouMae,
         apocalipseAtivo,
         subClasse
+        // slotAtual é uma variável global, não precisa salvar *dentro* do save
     };
 
-    localStorage.setItem('saveGame', JSON.stringify(dados));
-    log("💾 Jogo salvo com sucesso!");
+    localStorage.setItem(`saveGame_${slotAtual}`, JSON.stringify(dados));
+    log(`💾 Jogo salvo no Slot ${slotAtual}!`);
+}
+
+// ==============================
+// 💾 Tela de Slots de Save
+// ==============================
+
+function abrirTelaSlots() {
+    document.getElementById('tela-inicial').style.display = 'none';
+    document.getElementById('tela-slots').style.display = 'flex';
+    atualizarInfosSlots();
+}
+
+function atualizarInfosSlots() {
+    for (let i = 1; i <= 3; i++) {
+        const info = document.getElementById(`slot-${i}-info`);
+        const btnCarregar = document.getElementById(`slot-${i}-carregar`);
+        const btnNovo = document.getElementById(`slot-${i}-novo`);
+        const btnDeletar = document.getElementById(`slot-${i}-deletar`);
+
+        // Verificação: Se algum elemento HTML estiver faltando, isso pode ser a causa do travamento.
+        if (!info || !btnCarregar || !btnNovo || !btnDeletar) {
+            console.error(`Elemento HTML do Slot ${i} faltando. Verifique seu index.html.`);
+            continue; // Pula este slot e tenta o próximo para evitar o crash.
+        }
+
+        const save = localStorage.getItem(`saveGame_${i}`);
+
+        if (save) {
+            try {
+                const data = JSON.parse(save);
+
+                // Se o JSON carregar com sucesso
+                info.textContent = `Slot ${i}: ${data.heroi.nome} (Nível ${data.heroi.nivel})`;
+                btnCarregar.style.display = 'inline-block';
+                btnDeletar.style.display = 'inline-block';
+                btnNovo.style.display = 'none';
+
+            } catch (e) {
+                // Se o JSON estiver corrompido, tratamos como um slot vazio.
+                console.error(`Erro ao ler o save do Slot ${i}. O save está corrompido.`, e);
+                localStorage.removeItem(`saveGame_${i}`); // Limpa o save corrompido.
+
+                // Exibe como slot vazio
+                info.textContent = `Slot ${i}: Vazio (Save Corrompido)`;
+                btnCarregar.style.display = 'none';
+                btnDeletar.style.display = 'none';
+                btnNovo.style.display = 'inline-block';
+            }
+        } else {
+            // Lógica para slot vazio (sem save)
+            info.textContent = `Slot ${i}: Vazio`;
+            btnCarregar.style.display = 'none';
+            btnDeletar.style.display = 'none';
+            btnNovo.style.display = 'inline-block';
+        }
+    }
+}
+
+function deletarJogo(slot) {
+    if (confirm(`Tem certeza que quer deletar o jogo no Slot ${slot}? Isso não pode ser desfeito.`)) {
+        localStorage.removeItem(`saveGame_${slot}`);
+        log(`Slot ${slot} deletado.`);
+        atualizarInfosSlots(); // Atualiza a tela de slots
+    }
 }
 
 
-function carregarJogo() {
-    const dados = localStorage.getItem('saveGame');
+function carregarJogo(slot) {
+    const dados = localStorage.getItem(`saveGame_${slot}`);
     if (!dados) {
-        log("⚠️ Nenhum jogo salvo encontrado.");
+        log("⚠️ Nenhum jogo salvo encontrado nesse slot.");
         return;
     }
 
@@ -2672,15 +2773,15 @@ function carregarJogo() {
         apocalipseAtivo = false;
     }
 
-    // Garante que os botões estejam visíveis ao carregar
-    document.getElementById('btnVoltar').style.display = 'block';
-    document.getElementById('btn-nav-vila').style.display = 'block';
-    document.getElementById('btn-nav-floresta').style.display = 'block';
-    document.getElementById('btn-nav-caverna').style.display = 'block';
-    document.getElementById('btn-inventario').style.display = 'block';
+    // --- NOVA LÓGICA DE INICIAR ---
+    slotAtual = slot; // Define o slot carregado como o ATIVO
+    jogoFoiCarregado = true; // Flag para a função startGame
 
+    // Esconde a tela de slots e inicia o jogo
+    document.getElementById('tela-slots').style.display = 'none';
+    iniciarJogo();
 
-    // Atualizações gerais
+    // Atualizações que precisam rodar *depois* do log de "jogo carregado"
     mudarCenario(`imagens/${cenarioAtual}.jpg`, false);
     atualizarTela();
     atualizarLoja();
@@ -2691,7 +2792,12 @@ function carregarJogo() {
     atualizarAcoesEspecificas();
     atualizarBotoesTelaInicial();
 
-    log("✅ Jogo carregado com sucesso!");
+    // Garante que os botões de navegação estejam visíveis
+    document.getElementById('btnVoltar').style.display = 'block';
+    document.getElementById('btn-nav-vila').style.display = 'block';
+    document.getElementById('btn-nav-floresta').style.display = 'block';
+    document.getElementById('btn-nav-caverna').style.display = 'block';
+    document.getElementById('btn-inventario').style.display = 'block';
 }
 
 function fecharJogo() {

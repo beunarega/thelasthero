@@ -21,10 +21,9 @@
   <!-- Tela inicial -->
   <div id="tela-inicial">
     <h1> O último herói</h1>
-    <button id="btn-jogar" onclick="iniciarJogo()">Jogar</button>
-    <button id="btn-novo-jogo" onclick="novoJogo()" style="display: none;">Novo Jogo</button>
-    <button onclick="carregarJogo()">Carregar Jogo</button>
-    <button onclick="salvarJogo()">Salvar Jogo</button>
+
+    <button onclick="abrirTelaSlots()">Jogar / Carregar Jogo</button>
+
     <button onclick="abrirConfiguracoes()">Configurações</button>
     <button onclick="mostrarCreditos()">Créditos</button>
     <button onclick="abrirTelaConquistas()">Conquistas</button>
@@ -35,6 +34,39 @@
     <button onclick="fecharJogo()">Sair do Jogo</button>
     <p> O último herói (1.3) </p>
     <p> 2025 </p>
+  </div>
+  </div>
+  <div id="tela-slots" style="display: none;">
+    <h2>Salvar / Carregar Jogo</h2>
+
+    <div class="slot-item">
+      <p id="slot-1-info">Slot 1: Vazio</p>
+      <div class="slot-botoes">
+        <button id="slot-1-carregar" style="display: none;" onclick="carregarJogo(1)">Carregar</button>
+        <button id="slot-1-novo" style="display: block;" onclick="novoJogo(1)">Novo Jogo</button>
+        <button id="slot-1-deletar" style="display: none;" onclick="deletarJogo(1)">Deletar</button>
+      </div>
+    </div>
+
+    <div class="slot-item">
+      <p id="slot-2-info">Slot 2: Vazio</p>
+      <div class="slot-botoes">
+        <button id="slot-2-carregar" style="display: none;" onclick="carregarJogo(2)">Carregar</button>
+        <button id="slot-2-novo" style="display: block;" onclick="novoJogo(2)">Novo Jogo</button>
+        <button id="slot-2-deletar" style="display: none;" onclick="deletarJogo(2)">Deletar</button>
+      </div>
+    </div>
+
+    <div class="slot-item">
+      <p id="slot-3-info">Slot 3: Vazio</p>
+      <div class="slot-botoes">
+        <button id="slot-3-carregar" style="display: none;" onclick="carregarJogo(3)">Carregar</button>
+        <button id="slot-3-novo" style="display: block;" onclick="novoJogo(3)">Novo Jogo</button>
+        <button id="slot-3-deletar" style="display: none;" onclick="deletarJogo(3)">Deletar</button>
+      </div>
+    </div>
+
+    <button onclick="voltarAoMenu()">Voltar ao Menu Principal</button>
   </div>
 
   <!-- Créditos -->
@@ -124,7 +156,7 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
   <!-- Área do jogo -->
   <div id="jogo" style="display: none;">
     <div id="navegacao" style="display: flex;">
-      <button id="btnVoltar" onclick="voltarAoMenu()">Voltar ao Menu</button>
+      <button onclick="salvarJogo()" style="background-color: #004d40;">Salvar Jogo</button>
 
       <div id="controle-volume"
         style="position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;">
@@ -133,6 +165,7 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
         <button onclick="ajustarVolume(0)">🔇</button>
         <button onclick="ajustarVolume(1)">🔊</button>
       </div>
+
     </div>
 
     <div id="painel-jogo">
@@ -140,6 +173,8 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
       <div id="painel-botoes">
 
         <!-- Botões de navegação -->
+        <button id="btnVoltar" onclick="voltarAoMenu()">Voltar ao Menu</button>
+
         <button id="btn-nav-vila" onclick="mudarCenario('imagens/vila.jpg')">Ir para Vila</button>
         <button id="btn-nav-floresta" onclick="mudarCenario('imagens/floresta.jpg')">Ir para Floresta</button>
         <button id="btn-nav-caverna" onclick="mudarCenario('imagens/caverna.jpg')">Ir para Caverna</button>
