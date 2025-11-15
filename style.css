@@ -131,6 +131,56 @@ body {
     /* espaço entre cada linha */
 }
 
+#conquistas-tela {
+    display: none;
+    /* Começa escondida */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('imagens/tela-inicial.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: 10;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: white;
+}
+
+#conquistas-tela h2 {
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#conquistas-tela button {
+    margin-top: 20px;
+}
+
+.conquista-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+}
+
+.conquista-item p {
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.conquista-item button {
+    margin: 0 0 0 20px;
+    /* Remove margem do topo, adiciona à esquerda */
+    background-color: #555;
+}
+
 /* Log e status */
 #log,
 #game-text {
@@ -254,4 +304,18 @@ p {
     padding: 10px;
     margin: 10px 0;
     background-color: rgba(255, 255, 255, 0.8);
+}
+
+#lista-time {
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Fundo escuro semi-transparente */
+    color: white;
+    /* Garante que o texto seja branco */
+    padding: 10px;
+    border-radius: 8px;
+    /* Cantos arredondados, como o log */
+    margin-top: 5px;
+    /* Um pequeno espaço acima da lista */
+    min-height: 80px;
+    /* Altura mínima para parecer uma "área" */
 }

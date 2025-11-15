@@ -27,7 +27,7 @@
     <button onclick="salvarJogo()">Salvar Jogo</button>
     <button onclick="abrirConfiguracoes()">Configurações</button>
     <button onclick="mostrarCreditos()">Créditos</button>
-    <button onclick="mostrarConquistas()">Conquistas</button>
+    <button onclick="abrirTelaConquistas()">Conquistas</button>
     <div id="codigo-container">
       <input type="text" id="input-codigo" placeholder="Inserir código...">
       <button onclick="resgatarCodigo()">Resgatar</button>
@@ -93,6 +93,30 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
     });
 
   </script>
+
+  <div id="conquistas-tela" style="display: none;">
+    <h2>🏆 Conquistas 🏆</h2>
+
+    <div class="conquista-item">
+      <p id="status-conquista-verdadeiro">❌ Final Verdadeiro: O Pacificador</p>
+      <button onclick="hintFinalVerdadeiro()">Como?</button>
+    </div>
+    <div class="conquista-item">
+      <p id="status-conquista-bom">❌ Final Bom: O Salvador</p>
+      <button onclick="hintFinalBom()">Como?</button>
+    </div>
+    <div class="conquista-item">
+      <p id="status-conquista-mediano">❌ Final Mediano: O Executor</p>
+      <button onclick="hintFinalMediano()">Como?</button>
+    </div>
+    <div class="conquista-item">
+      <p id="status-conquista-ruim">❌ Final Ruim: O Monstro</p>
+      <button onclick="hintFinalRuim()">Como?</button>
+    </div>
+
+    <button onclick="voltarAoMenu()">Voltar ao Menu</button>
+  </div>
+  <div id="cenario" style="display: none;"></div>
 
   <!-- Cenario de fundo -->
   <div id="cenario" style="display: none;"></div>
@@ -226,6 +250,19 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
               <span id="inventario-cristal-vida">0</span>
             </div>
 
+            <div class="item-inventario">
+              <span class="item-desenho">🛡️</span> <span class="item-nome">Artefato (Def):</span> <span
+                id="inventario-artefato-def">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">⚔️</span> <span class="item-nome">Artefato (Atk):</span> <span
+                id="inventario-artefato-atk">Não</span>
+            </div>
+            <div class="item-inventario">
+              <span class="item-desenho">❤️</span> <span class="item-nome">Artefato (Vida):</span> <span
+                id="inventario-artefato-vida">Não</span>
+            </div>
+
             <!-- Armadura por partes -->
             <div class="item-inventario">
               <span class="item-desenho">🥾</span> <span class="item-nome">Bota:</span> <span
@@ -293,7 +330,6 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
       </div>
     </div>
   </div>
-  </div>
 
   <!-- Botão central de transformação -->
   <button id="botao-transformar" onclick="transformarEmMonstro()" style="
@@ -324,8 +360,6 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
       atualizarBotoesTelaInicial();
     };
   </script>
-
-  </div>
 
 </body>
 

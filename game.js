@@ -257,6 +257,7 @@ function voltarAoMenu() {
     document.getElementById('jogo').style.display = 'none';
     document.getElementById('cenario').style.display = 'none';
     document.getElementById('creditos').style.display = 'none';
+    document.getElementById('conquistas-tela').style.display = 'none';
     document.getElementById('tela-inicial').style.display = 'flex';
     document.getElementById('log').innerHTML = '';
     document.getElementById('botao-transformar').style.display = 'none';
@@ -518,15 +519,33 @@ function resgatarCodigo() {
 // ==============================
 // 🏆 Sistema de Conquistas
 // ==============================
-function mostrarConquistas() {
-    let lista = "🏆 Suas Conquistas 🏆\n\n";
 
-    lista += conquistas.finalVerdadeiro ? "✅ Final Verdadeiro: O Pacificador\n" : "❌ Final Verdadeiro: O Pacificador\n";
-    lista += conquistas.finalBom ? "✅ Final Bom: O Salvador\n" : "❌ Final Bom: O Salvador\n";
-    lista += conquistas.finalMediano ? "✅ Final Mediano: O Executor\n" : "❌ Final Mediano: O Executor\n";
-    lista += conquistas.finalRuim ? "✅ Final Ruim: O Monstro\n" : "❌ Final Ruim: O Monstro\n";
+function abrirTelaConquistas() {
+    // 1. Atualiza o texto de cada conquista
+    document.getElementById('status-conquista-verdadeiro').textContent = conquistas.finalVerdadeiro ? "✅ Final Verdadeiro: O Pacificador" : "❌ Final Verdadeiro: O Pacificador";
+    document.getElementById('status-conquista-bom').textContent = conquistas.finalBom ? "✅ Final Bom: O Salvador" : "❌ Final Bom: O Salvador";
+    document.getElementById('status-conquista-mediano').textContent = conquistas.finalMediano ? "✅ Final Mediano: O Executor" : "❌ Final Mediano: O Executor";
+    document.getElementById('status-conquista-ruim').textContent = conquistas.finalRuim ? "✅ Final Ruim: O Monstro" : "❌ Final Ruim: O Monstro";
 
-    alert(lista);
+    // 2. Mostra a tela de conquistas
+    document.getElementById('tela-inicial').style.display = 'none';
+    document.getElementById('conquistas-tela').style.display = 'flex'; // Usamos 'flex' por causa do CSS novo
+}
+
+function hintFinalVerdadeiro() {
+    alert("Dica: O Final Verdadeiro requer o 'Novo Jogo+'.\n\nFale com a Bruxa em Vanjag (Vila 2), encontre o item que ela pede na floresta e use a poção resultante no Criador.");
+}
+
+function hintFinalBom() {
+    alert("Dica: O Final Bom é o caminho do herói.\n\nDerrote o Criador (chefe final) sem nunca ter pulado uma vila usando o 'grinding' e sem ter o Final Verdadeiro.");
+}
+
+function hintFinalMediano() {
+    alert("Dica: O Final Mediano é para quem tem pressa.\n\nPule a reconstrução de pelo menos uma vila usando o 'grinding' (derrotar 150 monstros) e então derrote o Criador.");
+}
+
+function hintFinalRuim() {
+    alert("Dica: O Final Ruim é uma escolha sombria.\n\nQuando enfrentar uma Criatura Ancestral e sua vida estiver baixa, você receberá uma proposta... Aceite-a.");
 }
 
 // ---------------------- Atualizações de Interface ----------------------
@@ -1181,6 +1200,10 @@ function atualizarInventarioVisual() {
     document.getElementById('inventario-cristal-ataque').textContent = cristais.ataque;
     document.getElementById('inventario-cristal-defesa').textContent = cristais.defesa;
     document.getElementById('inventario-cristal-vida').textContent = cristais.vida;
+
+    document.getElementById('inventario-artefato-def').textContent = heroi.itens.artefato ? 'Sim' : 'Não';
+    document.getElementById('inventario-artefato-atk').textContent = heroi.itens.artefatoAtaque ? 'Sim' : 'Não';
+    document.getElementById('inventario-artefato-vida').textContent = heroi.itens.artefatoVida ? 'Sim' : 'Não';
 
     // Atualiza as partes da armadura
     const partes = heroi.itens.partesArmadura;
