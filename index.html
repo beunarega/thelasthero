@@ -25,6 +25,7 @@
     <button onclick="abrirTelaSlots()">Jogar / Carregar Jogo</button>
 
     <button onclick="abrirConfiguracoes()">Configurações</button>
+    <button onclick="abrirMenuMutators()">Modificadores de Jogo</button>
     <button onclick="mostrarCreditos()">Créditos</button>
     <button onclick="abrirTelaConquistas()">Conquistas</button>
     <div id="codigo-container">
@@ -32,7 +33,7 @@
       <button onclick="resgatarCodigo()">Resgatar</button>
     </div>
     <button onclick="fecharJogo()">Sair do Jogo</button>
-    <p> O último herói (1.3) </p>
+    <p> O último herói (1.4) </p>
     <p> 2025 </p>
   </div>
   </div>
@@ -67,6 +68,23 @@
     </div>
 
     <button onclick="voltarAoMenu()">Voltar ao Menu Principal</button>
+  </div>
+
+  <div id="tela-mutators" class="tela-secundaria">
+    <h2>Modificadores de Jogo (Mutators)</h2>
+
+    <div class="preset-botoes">
+      <button onclick="aplicarPresetMutators('hardcore')">Modo HARDCORE 😈</button>
+      <button onclick="aplicarPresetMutators('easy')">Modo FÁCIL 😊</button>
+      <button onclick="aplicarPresetMutators('normal')">Modo NORMAL (sem alterações)</button>
+    </div>
+
+    <div id="lista-mutators">
+    </div>
+
+    <p>Os modificadores escolhidos serão aplicados ao iniciar um **Novo Jogo**.</p>
+
+    <button onclick="fecharMenuMutators()">Voltar ao Menu Principal</button>
   </div>
 
   <!-- Créditos -->
@@ -156,7 +174,6 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
   <!-- Área do jogo -->
   <div id="jogo" style="display: none;">
     <div id="navegacao" style="display: flex;">
-      <button onclick="salvarJogo()" style="background-color: #004d40;">Salvar Jogo</button>
 
       <div id="controle-volume"
         style="position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 5px;">

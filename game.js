@@ -12,6 +12,8 @@ let heroi = {
     xp: 0,
     nivel: 1,
     monstrosDerrotados: 0, // ➡️ Para o sistema de sorte
+    danoRecebidoMulti: 1.0,
+    recursoGanhoMulti: 1.0,
 
     // ➕ Histórico de progresso
     criaturasDerrotadas: [],   // ➡️ Guarda os nomes das criaturas ancestrais derrotadas
@@ -129,6 +131,54 @@ const miniBosses = [
     }
 ];
 
+let mutatorsAtivos = {
+    // Malignos (Hardcore)
+    danoAumentado: false,
+    recursosEscassos: false,
+    permadeath: false,
+
+    // Bons (Easy)
+    vidaInicialExtra: false,
+    dinheiroInicialExtra: false,
+    monstroInicial: false
+};
+
+// Dicionário com as informações de cada mutator
+const mutatorsLista = {
+    // --- MALIGNOS (HARDCORE) ---
+    danoAumentado: {
+        nome: "Ataque Ancestral",
+        descricao: "Criaturas causam **+50%** de dano.",
+        tipo: "mal"
+    },
+    recursosEscassos: {
+        nome: "Economia Ruim",
+        descricao: "Recursos de coleta (madeira, pedra, ferro) são **-40%**.",
+        tipo: "mal"
+    },
+    permadeath: {
+        nome: "Morte Permanente",
+        descricao: "Se morrer, seu save é **DELETADO** para sempre.",
+        tipo: "mal"
+    },
+    // --- BONS (EASY) ---
+    vidaInicialExtra: {
+        nome: "Vigor do Herói",
+        descricao: "Comece com **+50** de Vida Máxima base.",
+        tipo: "bom"
+    },
+    dinheiroInicialExtra: {
+        nome: "Bolsos Cheios",
+        descricao: "Comece com **500** de Dinheiro extra.",
+        tipo: "bom"
+    },
+    monstroInicial: {
+        nome: "Amigo Fiel",
+        descricao: "O Monstro Consciente já está desbloqueado.",
+        tipo: "bom"
+    }
+};
+
 const teclaFloresta = '1';
 const teclaCaverna = '2';
 const teclaVila = '3';
@@ -229,6 +279,8 @@ function novoJogo(slot) {
     log(`🌟 Novo jogo iniciado para ${heroi.nome} no Slot ${slot}!`);
     if (subClasse) log(`Sua classe é: ${subClasse}`);
 
+    aplicarMutators();
+
     // 6. Esconde a tela de slots e inicia o jogo
     document.getElementById('tela-slots').style.display = 'none';
     iniciarJogo();
@@ -245,6 +297,37 @@ function mostrarCreditos() {
 }
 
 function voltarAoMenu() {
+
+    if (slotAtual !== null) {
+
+        // 2. Prepara os dados atuais do jogo (mesma lógica do salvarJogo)
+        // Garante bonus nas vilas para evitar erro de comparação
+        vilas.forEach((vila, i) => { if (!vila.bonus) vilas[i].bonus = []; });
+
+        const dadosAtuais = {
+            heroi, time, vilas, numeroDaVila, cenario: cenarioAtual,
+            criaturaAncestralAtiva, criaturaAncestralEncontrada, vidaCriaturaAncestral,
+            chefesDerrotados, chefaoFinalAtivo, vidaChefaoFinal, missaoAtiva,
+            progressoMissao, miniBossIndex, miniBossDerrotados, usouModoGrinding,
+            conquistas, bruxaRevelouSegredo, desbloqueouMae, apocalipseAtivo,
+            subClasse, mutatorsAtivos
+        };
+
+        // 3. Recupera o último save do slot
+        const saveString = localStorage.getItem(`saveGame_${slotAtual}`);
+
+        // 4. Compara (transforma o atual em string para comparar com o salvo)
+        const stringAtual = JSON.stringify(dadosAtuais);
+
+        if (saveString !== stringAtual) {
+            // Se forem diferentes, pergunta ao usuário
+            if (confirm("Você tem progresso não salvo. Deseja salvar antes de sair?")) {
+                salvarJogo();
+                alert("Jogo salvo com sucesso!");
+            }
+        }
+    }
+
     document.getElementById('jogo').style.display = 'none';
     document.getElementById('cenario').style.display = 'none';
     document.getElementById('creditos').style.display = 'none';
@@ -538,6 +621,136 @@ function hintFinalMediano() {
 
 function hintFinalRuim() {
     alert("Dica: O Final Ruim é uma escolha sombria.\n\nQuando enfrentar uma Criatura Ancestral e sua vida estiver baixa, você receberá uma proposta... Aceite-a.");
+}
+
+// ------------------------ sistema de mutators --------------------------
+
+function abrirMenuMutators() {
+    // Assumindo que a tela inicial é 'tela-inicial'
+    document.getElementById('tela-inicial').style.display = 'none';
+    document.getElementById('tela-mutators').style.display = 'flex';
+    renderizarMenuMutators();
+}
+
+function fecharMenuMutators() {
+    document.getElementById('tela-mutators').style.display = 'none';
+    document.getElementById('tela-inicial').style.display = 'flex';
+}
+
+// Alternar o estado de um mutator
+function toggleMutator(key) {
+    if (mutatorsAtivos.hasOwnProperty(key)) {
+        mutatorsAtivos[key] = !mutatorsAtivos[key];
+        renderizarMenuMutators(); // Atualiza a tela imediatamente
+    }
+}
+
+// Aplicar os modos predefinidos (Hardcore, Easy, Normal)
+function aplicarPresetMutators(preset) {
+    for (const key in mutatorsLista) {
+        const mutator = mutatorsLista[key];
+
+        if (preset === 'hardcore') {
+            mutatorsAtivos[key] = (mutator.tipo === 'mal'); // Ativa só os ruins
+        } else if (preset === 'easy') {
+            mutatorsAtivos[key] = (mutator.tipo === 'bom'); // Ativa só os bons
+        } else if (preset === 'normal') {
+            mutatorsAtivos[key] = false; // Desativa todos
+        }
+    }
+    renderizarMenuMutators();
+    log(`Preset **${preset.toUpperCase()}** aplicado.`);
+}
+
+// Renderizar a lista de mutators na tela
+function renderizarMenuMutators() {
+    const listaMutatorsDiv = document.getElementById('lista-mutators');
+    let html = '<h3>Malignos (Dificuldade)</h3>';
+
+    // Gera lista de Malignos
+    for (const key in mutatorsLista) {
+        const mutator = mutatorsLista[key];
+        if (mutator.tipo === 'mal') {
+            const isAtivo = mutatorsAtivos[key];
+            const estado = isAtivo ? 'ATIVO' : 'DESATIVADO';
+            const classe = isAtivo ? 'ativo' : 'inativo';
+
+            html += `
+                <div class="mutator-item ${classe}">
+                    <p><strong>${mutator.nome}</strong>: ${mutator.descricao}</p>
+                    <button onclick="toggleMutator('${key}')">${estado}</button>
+                </div>
+            `;
+        }
+    }
+
+    html += '<h3>Bons (Facilidade)</h3>';
+
+    // Gera lista de Bons
+    for (const key in mutatorsLista) {
+        const mutator = mutatorsLista[key];
+        if (mutator.tipo === 'bom') {
+            const isAtivo = mutatorsAtivos[key];
+            const estado = isAtivo ? 'ATIVO' : 'DESATIVADO';
+            const classe = isAtivo ? 'ativo' : 'inativo';
+
+            html += `
+                <div class="mutator-item ${classe}">
+                    <p><strong>${mutator.nome}</strong>: ${mutator.descricao}</p>
+                    <button onclick="toggleMutator('${key}')">${estado}</button>
+                </div>
+            `;
+        }
+    }
+
+    listaMutatorsDiv.innerHTML = html;
+}
+
+function aplicarMutators() {
+    // Reset dos multiplicadores (importante para que heroi.danoRecebidoMulti, etc, existam)
+    heroi.danoRecebidoMulti = 1.0;
+    heroi.recursoGanhoMulti = 1.0;
+
+    // --- APLICAÇÃO DOS MUTATORS MALIGNOS ---
+
+    // 1. Ataque Ancestral (Dano Aumentado)
+    if (mutatorsAtivos.danoAumentado) {
+        log("💥 Ativado: **Ataque Ancestral** (Inimigos causam mais dano).");
+        heroi.danoRecebidoMulti = 1.5; // +50% de dano recebido
+    }
+
+    // 2. Economia Ruim (Recursos Escassos)
+    if (mutatorsAtivos.recursosEscassos) {
+        log("📉 Ativado: **Economia Ruim** (Recursos reduzidos).");
+        heroi.recursoGanhoMulti = 0.6; // 60% dos recursos (40% de redução)
+    }
+
+    // 3. Sem Ajuda (Sem Poção Inicial)
+    if (mutatorsAtivos.permadeath) {
+        log("💀 Ativado: **Morte Permanente**. Se morrer, é Game Over real!");
+        // Não precisa alterar status, a lógica será na hora da morte
+    }
+
+    // --- APLICAÇÃO DOS MUTATORS BONS ---
+
+    // 4. Vigor do Herói (Vida Inicial Extra)
+    if (mutatorsAtivos.vidaInicialExtra) {
+        log("❤️ Ativado: **Vigor do Herói** (+50 Vida Máxima).");
+        heroi.vidaMaxima += 50;
+        heroi.vida = heroi.vidaMaxima;
+    }
+
+    // 5. Bolsos Cheios (Dinheiro Inicial Extra)
+    if (mutatorsAtivos.dinheiroInicialExtra) {
+        log("💰 Ativado: **Bolsos Cheios** (+500 Dinheiro).");
+        heroi.dinheiro += 500;
+    }
+
+    // 6. Amigo Fiel (Monstro Inicial)
+    if (mutatorsAtivos.monstroInicial) {
+        log("🤝 Ativado: **Amigo Fiel** (Monstro Consciente desbloqueado).");
+        adicionarMonstroAliado();
+    }
 }
 
 // ---------------------- Atualizações de Interface ----------------------
@@ -1130,6 +1343,22 @@ function resetarHeroi() {
         vida: 0
     };
 
+    miniBosses.forEach(boss => {
+        // Redefine a vida para o valor original baseado no ID ou tipo
+        // Como o array original 'miniBosses' é modificado diretamente durante o combate,
+        // precisamos restaurar os valores iniciais.
+
+        if (boss.id === "mutante") boss.vida = 50;
+        if (boss.id === "antiheroi") boss.vida = 100;
+        if (boss.id === "elemental") boss.vida = 150;
+        if (boss.id === "guardiaoFinal") boss.vida = 5000;
+
+        // Limpa propriedades temporárias de combate
+        delete boss.debuffAplicado;
+        delete boss.debuffAvisado;
+        delete boss.dotRestante;
+    });
+
     miniBossDerrotados = [];
 
     usouModoGrinding = false;
@@ -1139,6 +1368,7 @@ function resetarHeroi() {
     chefesDerrotados = 0;
     chefaoFinalAtivo = false;
 
+    mensagemTemploMostrada = false;
     mostrouCartazes = false;
     bruxaRevelouSegredo = false;
     apocalipseAtivo = false;
@@ -1432,6 +1662,12 @@ function lutar() {
                 heroi.vida = Math.floor(heroi.vidaMaxima * 0.5);
                 log(`Você ${heroi.nome} usou um Elixir e evitou a morte! Vida restaurada para 50.`);
             } else {
+                if (mutatorsAtivos.permadeath) {
+                    alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                    if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                    location.reload(); // Recarrega a página para o menu
+                    return;
+                }
                 log(`Você ${heroi.nome} morreu durante o combate final.`);
                 mudarCenario('imagens/vila.jpg');
             }
@@ -1533,6 +1769,12 @@ function lutar() {
                     heroi.vida = Math.floor(heroi.vidaMaxima * 0.5);
                     log(`✨ Você ${heroi.nome} usou um Elixir para se reerguer!`);
                 } else {
+                    if (mutatorsAtivos.permadeath) {
+                        alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                        if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                        location.reload(); // Recarrega a página para o menu
+                        return;
+                    }
                     heroi.vida = 0;
                     heroi.dinheiro = Math.floor(heroi.dinheiro * 0.5);
                     mudarCenario('imagens/vila.jpg');
@@ -1654,6 +1896,12 @@ function lutar() {
                 heroi.vida = Math.floor(heroi.vidaMaxima * 0.5);
                 log(`Você ${heroi.nome} usou um Elixir para sobreviver!`);
             } else {
+                if (mutatorsAtivos.permadeath) {
+                    alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                    if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                    location.reload(); // Recarrega a página para o menu
+                    return;
+                }
 
                 if (miniBossAtual && miniBossAtual.nome === "Criatura Anti-Herói" && miniBossAtual.debuffAplicado) {
                     heroi.ataque = miniBossAtual.ataqueOriginal;
@@ -1686,9 +1934,15 @@ function lutar() {
             log("Os deuses o protegeram deste ataque!");
         }
 
+        // Cálculo do dano básico
         let danoRecebido = Math.max(0, danoMonstro - defesaTotal);
-        heroi.vida -= danoRecebido;
 
+        // APLICAÇÃO DO MUTATOR:
+        // Se for Normal (1.0): dano * 1.0 = dano normal.
+        // Se for Hardcore (1.5): dano * 1.5 = +50% de dano.
+        danoRecebido = Math.floor(danoRecebido * (heroi.danoRecebidoMulti || 1.0));
+
+        heroi.vida -= danoRecebido;
 
         heroi.dinheiro += Math.floor(Math.random() * heroi.nivel) + 1;
         heroi.xp += Math.floor(Math.random() * 3) + heroi.nivel;
@@ -1752,6 +2006,12 @@ function lutar() {
                 heroi.xp = Math.max(0, heroi.xp - 5);
                 mudarCenario('imagens/vila.jpg');
                 atualizarTela();
+                if (mutatorsAtivos.permadeath) {
+                    alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                    if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                    location.reload(); // Recarrega a página para o menu
+                    return;
+                }
                 return;
             }
         }
@@ -1784,8 +2044,14 @@ function lutar() {
             }
 
             if (chefesDerrotados === 2) {
-                log(`Um monstro com a mente não conrrompida aparece disendo que viu que você ${heroi.nome} é poderoso e pode salvar o mundo e agora te acompanha em sua jornada.`);
-                adicionarMonstroAliado();
+                // Só adiciona se o jogador AINDA NÃO tiver o monstro (ex: não usou o Mutator)
+                if (!time.monstroAmigo) {
+                    log(`Um monstro com a mente não corrompida aparece dizendo que viu que você ${heroi.nome} é poderoso e pode salvar o mundo e agora te acompanha em sua jornada.`);
+                    adicionarMonstroAliado();
+                } else {
+                    // Opcional: Mensagem alternativa caso já tenha o monstro pelo Mutator
+                    log(`Um outro monstro consciente observa sua vitória, acena para o seu aliado monstro e desaparece nas sombras.`);
+                }
             }
 
             if (chefesDerrotados >= 3) {
@@ -1800,6 +2066,12 @@ function lutar() {
     }
 
     if (heroi.vida <= 0) {
+        if (mutatorsAtivos.permadeath) {
+            alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+            if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+            location.reload(); // Recarrega a página para o menu
+            return;
+        }
         document.getElementById('botao-transformar').style.display = 'none';
         if (heroi.itens.elixires > 0) {
             heroi.itens.elixires--;
@@ -1985,6 +2257,12 @@ function explorar() {
         log(`O Guardião ataca! Você ${heroi.nome} recebeu ${danoBoss} de dano.`);
 
         if (heroi.vida <= 0) {
+            if (mutatorsAtivos.permadeath) {
+                alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                location.reload(); // Recarrega a página para o menu
+                return;
+            }
             // Lógica de morte (copiada da sua função 'explorar')
             log("Você foi derrotado pelo Guardião...");
             if (heroi.itens.elixires > 0) {
@@ -2047,8 +2325,16 @@ function explorar() {
             log("Os deuses o protegeram!");
         }
 
+        // Cálculo do dano básico
         let danoRecebido = Math.max(0, danoMonstro - defesaTotal);
+
+        // APLICAÇÃO DO MUTATOR:
+        // Se for Normal (1.0): dano * 1.0 = dano normal.
+        // Se for Hardcore (1.5): dano * 1.5 = +50% de dano.
+        danoRecebido = Math.floor(danoRecebido * (heroi.danoRecebidoMulti || 1.0));
+
         heroi.vida -= danoRecebido;
+
         log(`Você ${heroi.nome} recebeu ${danoRecebido} de dano.`);
 
         if (heroi.vida <= 0) {
@@ -2057,6 +2343,12 @@ function explorar() {
                 heroi.vida = Math.floor(heroi.vidaMaxima * 0.5);
                 log("Usou um Elixir! Vida restaurada.");
             } else {
+                if (mutatorsAtivos.permadeath) {
+                    alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+                    if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+                    location.reload(); // Recarrega a página para o menu
+                    return;
+                }
                 let perdaDinheiro = Math.floor(heroi.dinheiro * 0.5);
                 let perdaXP = Math.min(5, heroi.xp);
                 heroi.dinheiro -= perdaDinheiro;
@@ -2115,20 +2407,37 @@ function explorar() {
 
 
     else if (chance < 0.47) {
-        vila.materiais.madeira += 1;
-        log(`Você ${heroi.nome} encontrou uma madeira.`);
+        // MADEIRA
+        // Se o modo for Normal (1.0), Math.random() sempre será menor que 1.0 -> Sucesso garantido.
+        // Se o modo for Hardcore (0.6), Math.random() só será menor 60% das vezes.
+        if (Math.random() < (heroi.recursoGanhoMulti || 1.0)) {
+            vila.materiais.madeira += 1;
+            log(`Você ${heroi.nome} encontrou uma madeira.`);
+        } else {
+            log(`Você encontrou madeira, mas ela estava podre e se desfez. (Modo Hardcore)`);
+        }
         encontrouMaterialOuArtefato = true;
     }
 
     else if (chance < 0.67) {
-        vila.materiais.pedra += 1;
-        log(`Você ${heroi.nome} encontrou uma pedra.`);
+        // PEDRA
+        if (Math.random() < (heroi.recursoGanhoMulti || 1.0)) {
+            vila.materiais.pedra += 1;
+            log(`Você ${heroi.nome} encontrou uma pedra.`);
+        } else {
+            log(`Você tentou pegar a pedra, mas ela esfarelou. (Modo Hardcore)`);
+        }
         encontrouMaterialOuArtefato = true;
     }
 
     else if (chance < 0.75) {
-        vila.materiais.ferro += 1;
-        log(`Você ${heroi.nome} encontrou um ferro raro.`);
+        // FERRO
+        if (Math.random() < (heroi.recursoGanhoMulti || 1.0)) {
+            vila.materiais.ferro += 1;
+            log(`Você ${heroi.nome} encontrou um ferro raro.`);
+        } else {
+            log(`Você viu um veio de ferro, mas não conseguiu extraí-lo. (Modo Hardcore)`);
+        }
         encontrouMaterialOuArtefato = true;
     }
 
@@ -2136,7 +2445,7 @@ function explorar() {
         if (subClasse === 'explorador') {
             // Explorador sempre encontra algo (ex: madeira)
             vila.materiais.ferro += 1;
-            log(`Sua perícia de explorador o impede de voltar de mãos vazias. Você ${heroi.nome} encontrou uma ferro raro.`);
+            log(`Sua perícia de explorador o impede de voltar de mãos vazias. Você ${heroi.nome} encontrou um ferro raro.`);
             encontrouMaterialOuArtefato = true;
         } else {
             // Jogador normal
@@ -2456,7 +2765,7 @@ function transformarEmMonstro() {
 
     log(`Você ${heroi.nome} aceitou a proposta da Criatura Ancestral...`);
     log(`Agora você ${heroi.nome} é um monstro como ela, e vagueia pela caverna por toda eternidade.`);
-    log("(Final ruin)");
+    log("(Final ruim)");
     conquistas.finalRuim = true;
 
 
@@ -2593,6 +2902,12 @@ function enfrentarMonstroOriginal() {
     }
 
     if (heroi.vida <= 0) {
+        if (mutatorsAtivos.permadeath) {
+            alert("💀 VOCÊ MORREU! (Modo Morte Permanente)\n\nSeu save foi deletado para sempre.");
+            if (slotAtual) localStorage.removeItem(`saveGame_${slotAtual}`);
+            location.reload(); // Recarrega a página para o menu
+            return;
+        }
         log("⚰️ O Monstro Original o derrotou. Ainda há esperança?");
         heroi.vida = 0;
         return;
@@ -2641,7 +2956,8 @@ function salvarJogo() {
         bruxaRevelouSegredo,
         desbloqueouMae,
         apocalipseAtivo,
-        subClasse
+        subClasse,
+        mutatorsAtivos
         // slotAtual é uma variável global, não precisa salvar *dentro* do save
     };
 
@@ -2753,6 +3069,15 @@ function carregarJogo(slot) {
     desbloqueouMae = obj.desbloqueouMae || false;
     apocalipseAtivo = obj.apocalipseAtivo || false;
     subClasse = obj.subClasse || null;
+
+    mutatorsAtivos = obj.mutatorsAtivos || {
+        danoAumentado: false,
+        recursosEscassos: false,
+        permadeath: false,
+        vidaInicialExtra: false,
+        dinheiroInicialExtra: false,
+        monstroInicial: false
+    };
 
     // Criaturas Ancestrais e Chefão
     criaturaAncestralAtiva = obj.criaturaAncestralAtiva || false;

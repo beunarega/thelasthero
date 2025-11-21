@@ -385,3 +385,90 @@ p {
     background-color: #b71c1c;
     /* Vermelho escuro */
 }
+
+#tela-mutators {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.9);
+    /* Fundo escuro */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    color: white;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#tela-mutators h2 {
+    color: #ff9900;
+    /* Destaque para o título */
+    margin-bottom: 20px;
+}
+
+.preset-botoes button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#lista-mutators {
+    width: 90%;
+    max-width: 700px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(30, 30, 30, 0.9);
+    border-radius: 10px;
+}
+
+#lista-mutators h3 {
+    margin-top: 15px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 5px;
+    color: #ccc;
+}
+
+.mutator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 5px;
+    border-bottom: 1px dashed #444;
+}
+
+.mutator-item button {
+    padding: 5px 10px;
+    cursor: pointer;
+    min-width: 100px;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+/* Estilo para mutators ATIVOS */
+.mutator-item.ativo button {
+    background-color: #28a745;
+    /* Verde */
+    color: white;
+}
+
+.mutator-item.ativo p {
+    color: #28a745;
+}
+
+/* Estilo para mutators INATIVOS */
+.mutator-item.inativo button {
+    background-color: #dc3545;
+    /* Vermelho */
+    color: white;
+}
+
+.mutator-item.inativo p {
+    color: #aaa;
+}
