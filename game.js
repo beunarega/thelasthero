@@ -339,6 +339,20 @@ function voltarAoMenu() {
     atualizarBotoesTelaInicial();
 }
 
+function voltarAoMenuPrincipal() {
+
+    document.getElementById('jogo').style.display = 'none';
+    document.getElementById('cenario').style.display = 'none';
+    document.getElementById('creditos').style.display = 'none';
+    document.getElementById('conquistas-tela').style.display = 'none';
+    document.getElementById('tela-slots').style.display = 'none';
+    document.getElementById('tela-inicial').style.display = 'flex';
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('botao-transformar').style.display = 'none';
+    atualizarBotoesTelaInicial();
+
+}
+
 function atualizarBotoesTelaInicial() {
     const jogar = document.getElementById('btn-jogar');
     const novoJogo = document.getElementById('btn-novo-jogo');
