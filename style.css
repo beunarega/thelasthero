@@ -472,3 +472,21 @@ p {
 .mutator-item.inativo p {
     color: #aaa;
 }
+
+#indice-peixes,
+#loja-pesca {
+    color: white;
+    /* Torna o texto branco */
+}
+
+#lista-indice li {
+    margin-bottom: 5px;
+    /* Dá um espacinho entre os itens da lista */
+    color: #e0e0e0;
+    /* Um branco levemente cinza para facilitar leitura */
+}
+
+#lista-indice li strong {
+    color: #ffeb3b;
+    /* Destaca o nome do peixe em amarelo */
+}

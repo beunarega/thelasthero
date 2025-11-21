@@ -33,7 +33,7 @@
       <button onclick="resgatarCodigo()">Resgatar</button>
     </div>
     <button onclick="fecharJogo()">Sair do Jogo</button>
-    <p> O último herói (1.4) </p>
+    <p> O último herói (1.5) </p>
     <p> 2025 </p>
   </div>
   </div>
@@ -96,7 +96,7 @@
       <a href="https://discord.gg/TyZN3BdEb3" class="discord-button" target="_blank">
         aceitar convite
       </a>
-      <button onclick="voltarAoMenu()">Voltar ao Menu</button>
+      <button onclick="voltarAoMenuPrincipal()">Voltar ao Menu Principal</button>
   </div>
 
   <div id="configuracoes" style="display: none; position: absolute; top: 50%; left: 50%;
@@ -342,6 +342,44 @@ transform: translate(-50%, -50%); background-color: #f0f0f0; padding: 20px; bord
           <p><strong>Exploração</strong></p>
           <button onclick="explorar()">Explorar Floresta</button>
           <button onclick="descansar()">Descansar</button>
+        </div>
+
+        <div id="expedicoes" style="display: none;">
+          <p><strong>Expedições</strong></p>
+          <button id="btn-exp-capivara" onclick="enviarExpedicao('capivara')">Enviar Capivara (Madeira)</button>
+          <button id="btn-exp-heroi" onclick="enviarExpedicao('heroiSecundario')">Enviar Herói Sec. (Pedra)</button>
+          <button id="btn-exp-monstro" onclick="enviarExpedicao('monstroAmigo')">Enviar Monstro (Ferro)</button>
+          <p id="status-expedicao" style="font-size: 0.8em; color: yellow;"></p>
+        </div>
+
+        <div id="lago-floresta" style="display: none;">
+          <p><strong>Lago da Floresta</strong></p>
+          <button onclick="pescar()">🎣 Pescar</button>
+          <button onclick="abrirLojaPesca()">🏚️ Cabana do Pescador</button>
+          <button onclick="abrirIndicePeixes()">📖 Índice de Peixes</button>
+        </div>
+
+        <div id="loja-pesca"
+          style="display: none; background: rgba(0,0,0,0.9); padding: 10px; position: absolute; z-index: 100;">
+          <h3>🏚️ Cabana do Pescador</h3>
+          <p>Compre varas ou cozinhe seus peixes.</p>
+
+          <h4>Varas de Pesca:</h4>
+          <button onclick="comprarVara(1)">Vara Velha (50g)</button>
+          <button onclick="comprarVara(2)">Vara Boa (150g)</button>
+          <button onclick="comprarVara(3)">Vara Mestra (500g)</button>
+
+          <h4>Cozinha (Buffs):</h4>
+          <div id="lista-cozinha"></div>
+
+          <button onclick="fecharLojaPesca()" style="background: red;">Fechar</button>
+        </div>
+
+        <div id="indice-peixes"
+          style="display: none; background: rgba(0,0,0,0.9); padding: 10px; position: absolute; z-index: 100; width: 300px;">
+          <h3>📖 Índice de Peixes</h3>
+          <ul id="lista-indice" style="text-align: left; padding-left: 20px;"></ul>
+          <button onclick="fecharIndicePeixes()" style="background: red;">Fechar</button>
         </div>
 
         <!-- Sacrifício -->

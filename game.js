@@ -14,6 +14,8 @@ let heroi = {
     monstrosDerrotados: 0, // ➡️ Para o sistema de sorte
     danoRecebidoMulti: 1.0,
     recursoGanhoMulti: 1.0,
+    peixes: {},
+    buffAtual: null,
 
     // ➕ Histórico de progresso
     criaturasDerrotadas: [],   // ➡️ Guarda os nomes das criaturas ancestrais derrotadas
@@ -42,7 +44,8 @@ let heroi = {
         pocaoPurificadora: false,
         derrotouChefao: false,  // Marca se o chefão final foi vencido
         pocoes: 0,
-        elixires: 0
+        elixires: 0,
+        varaNivel: 0
     },
     codigosResgatados: {}
 };
@@ -177,6 +180,13 @@ const mutatorsLista = {
         descricao: "O Monstro Consciente já está desbloqueado.",
         tipo: "bom"
     }
+};
+
+const peixesData = {
+    lambari: { nome: "Lambari", raridade: 1, xp: 5, buffTipo: "vida", buffValor: 20, buffCargas: 2, desc: "Cura 20 de vida (Instantâneo)" },
+    bagre: { nome: "Bagre", raridade: 2, xp: 10, buffTipo: "defesa", buffValor: 2, buffCargas: 3, desc: "+2 Defesa por 3 lutas" },
+    tucunare: { nome: "Tucunaré", raridade: 3, xp: 20, buffTipo: "ataque", buffValor: 3, buffCargas: 3, desc: "+3 Ataque por 3 lutas" },
+    dourado: { nome: "Dourado Lendário", raridade: 4, xp: 50, buffTipo: "todos", buffValor: 5, buffCargas: 5, desc: "+5 Todos Status por 5 lutas" }
 };
 
 const teclaFloresta = '1';
@@ -858,8 +868,10 @@ function atualizarAcoesEspecificas() {
     const exibirFloresta = (cenarioAtual === 'floresta');
     const exibirMelhorar = (cenarioAtual === 'vila');
 
+    document.getElementById('lago-floresta').style.display = exibirFloresta ? 'block' : 'none';
     document.getElementById('explorar-floresta').style.display = exibirFloresta ? 'block' : 'none';
     document.getElementById('melhorar-vila').style.display = exibirMelhorar ? 'block' : 'none';
+    document.getElementById('expedicoes').style.display = exibirFloresta ? 'block' : 'none';
     document.getElementById('bruxa').style.display = (cenarioAtual === 'floresta' && numeroDaVila === 1 && vilaAtual.nivel >= 3) ? 'block' : 'none';
 
     const botaoBruxaHistoria = document.getElementById('botao-bruxa-historia');
@@ -953,6 +965,177 @@ function atualizarTextoBotaoArmadura() {
 
     botao.innerText = "Armadura completa!";
     botao.disabled = true;
+}
+
+// ==============================
+// ⛺ Sistema de Expedições
+// ==============================
+
+function enviarExpedicao(membroKey) {
+    const membro = time[membroKey];
+    if (!membro) {
+        log("❌ Você não tem esse membro no time.");
+        return;
+    }
+    if (membro.ocupado) {
+        log(`❌ ${membro.nome} já está em uma expedição.`);
+        return;
+    }
+
+    let recurso = "";
+    let quantidade = 0;
+    let tempo = 0; // em milissegundos
+
+    // Configuração de cada personagem
+    if (membroKey === 'capivara') {
+        recurso = 'madeira';
+        quantidade = 10;
+        tempo = 40000; // 40s
+    } else if (membroKey === 'heroiSecundario') {
+        recurso = 'pedra';
+        quantidade = 10;
+        tempo = 40000; // 40s
+    } else if (membroKey === 'monstroAmigo') {
+        recurso = 'ferro';
+        quantidade = 5;
+        tempo = 60000; // 60s
+    }
+
+    membro.ocupado = true;
+    log(`👋 ${membro.nome} saiu em expedição para buscar ${recurso}. Volta em ${tempo / 1000}s.`);
+    atualizarPainelTime(); // Atualiza visual (para mostrar que saiu)
+
+    // Timer da expedição
+    setTimeout(() => {
+        // Verifica se o jogo ainda está rodando e o membro existe
+        if (time[membroKey]) {
+            time[membroKey].ocupado = false;
+            vilas[numeroDaVila].materiais[recurso] += quantidade;
+            log(`📦 ${membro.nome} retornou da expedição com ${quantidade} de ${recurso}!`);
+            atualizarPainelTime();
+            atualizarVilaStatus();
+        }
+    }, tempo);
+}
+
+// ==============================
+// 🎣 Sistema de Pesca
+// ==============================
+
+function abrirLojaPesca() {
+    document.getElementById('loja-pesca').style.display = 'block';
+    atualizarCozinha();
+}
+function fecharLojaPesca() { document.getElementById('loja-pesca').style.display = 'none'; }
+
+function abrirIndicePeixes() {
+    document.getElementById('indice-peixes').style.display = 'block';
+    const lista = document.getElementById('lista-indice');
+    lista.innerHTML = '';
+    for (let key in peixesData) {
+        const p = peixesData[key];
+        lista.innerHTML += `<li><strong>${p.nome}</strong>: ${p.desc}</li>`;
+    }
+}
+function fecharIndicePeixes() { document.getElementById('indice-peixes').style.display = 'none'; }
+
+function comprarVara(nivel) {
+    const precos = { 1: 50, 2: 150, 3: 500 };
+    if (heroi.dinheiro >= precos[nivel]) {
+        if (heroi.itens.varaNivel >= nivel) {
+            log("Você já tem uma vara igual ou melhor.");
+            return;
+        }
+        heroi.dinheiro -= precos[nivel];
+        heroi.itens.varaNivel = nivel;
+        log(`🎣 Vara de nível ${nivel} comprada!`);
+        atualizarTela();
+    } else {
+        log("Dinheiro insuficiente.");
+    }
+}
+
+function pescar() {
+    if (heroi.itens.varaNivel === 0) {
+        log("❌ Você precisa comprar uma vara de pesca primeiro.");
+        return;
+    }
+
+    log("🎣 Jogando o anzol...");
+
+    // Chance baseada na vara
+    // Vara 1: Max Raridade 2
+    // Vara 2: Max Raridade 3
+    // Vara 3: Max Raridade 4
+
+    setTimeout(() => {
+        const roll = Math.random();
+        let peixePego = null;
+
+        // Lógica de pescaria
+        if (roll < 0.4) {
+            // 40% de não pegar nada ou lixo
+            log("...Nada mordeu.");
+            return;
+        }
+
+        const chanceRaridade = Math.random() + (heroi.itens.varaNivel * 0.1);
+
+        if (chanceRaridade > 0.9 && heroi.itens.varaNivel >= 3) peixePego = 'dourado';
+        else if (chanceRaridade > 0.7 && heroi.itens.varaNivel >= 2) peixePego = 'tucunare';
+        else if (chanceRaridade > 0.4) peixePego = 'bagre';
+        else peixePego = 'lambari';
+
+        const dadosPeixe = peixesData[peixePego];
+
+        // Adiciona ao inventário
+        if (!heroi.peixes[peixePego]) heroi.peixes[peixePego] = 0;
+        heroi.peixes[peixePego]++;
+
+        log(`✨ Você pescou um **${dadosPeixe.nome}**!`);
+        atualizarTela();
+    }, 1500); // 1.5s de espera
+}
+
+function atualizarCozinha() {
+    const div = document.getElementById('lista-cozinha');
+    div.innerHTML = '';
+
+    for (let key in peixesData) {
+        const p = peixesData[key];
+        const qtd = heroi.peixes[key] || 0;
+
+        const btn = document.createElement('button');
+        btn.innerText = `Cozinhar ${p.nome} (Tem: ${qtd})`;
+        btn.onclick = () => cozinharPeixe(key);
+        if (qtd <= 0) btn.disabled = true;
+
+        div.appendChild(btn);
+        div.appendChild(document.createElement('br'));
+    }
+}
+
+function cozinharPeixe(key) {
+    if (!heroi.peixes[key] || heroi.peixes[key] <= 0) return;
+
+    const p = peixesData[key];
+    heroi.peixes[key]--;
+
+    if (p.buffTipo === 'vida') {
+        heroi.vida = Math.min(heroi.vida + p.buffValor, heroi.vidaMaxima);
+        log(`🍲 Você comeu ${p.nome} Assado e recuperou ${p.buffValor} de vida!`);
+    } else {
+        heroi.buffAtual = {
+            tipo: p.buffTipo,
+            valor: p.buffValor,
+            cargas: p.buffCargas,
+            nome: p.nome
+        };
+        log(`🍲 Você comeu ${p.nome} Assado! Bônus: ${p.desc}`);
+    }
+
+    atualizarCozinha();
+    atualizarTela();
 }
 
 // ==============================
@@ -1077,12 +1260,35 @@ function atualizarPainelTime() {
     if (!lista) return;
 
     lista.innerHTML = '';
+
+    // 1. Mostra o Buff do Herói (Se tiver comido peixe)
+    if (heroi.buffAtual) {
+        const liBuff = document.createElement('li');
+        liBuff.style.color = '#4caf50'; // Verde para destacar
+        liBuff.style.fontWeight = 'bold';
+        // Ex: "💪 Buff Ativo: +2 ATAQUE (3 lutas restantes)"
+        liBuff.textContent = `🍲 Buff: ${heroi.buffAtual.nome} (+${heroi.buffAtual.valor} ${heroi.buffAtual.tipo.toUpperCase()}) - Restam: ${heroi.buffAtual.cargas} lutas`;
+        lista.appendChild(liBuff);
+    }
+
+    // 2. Lista os Aliados
     for (const membroKey in time) {
-        if (membroKey === 'heroiPrincipal') continue;
+        if (membroKey === 'heroiPrincipal') continue; // Pula o herói principal pois ele tem painel próprio
+
         const membro = time[membroKey];
         if (membro) {
             const li = document.createElement('li');
-            li.textContent = `${membro.nome} (❤️${membro.vida}, ATQ: ${membro.ataque}, DEF: ${membro.defesa})`;
+
+            // Verifica se está em expedição (adicionado no passo anterior)
+            if (membro.ocupado) {
+                li.textContent = `${membro.nome} ⏳ (EM EXPEDIÇÃO)`;
+                li.style.color = '#ffeb3b'; // Amarelo para indicar que está ocupado
+                li.style.fontStyle = 'italic';
+            } else {
+                // Mostra status normal
+                li.textContent = `${membro.nome} (❤️${membro.vida}, ATQ: ${membro.ataque}, DEF: ${membro.defesa})`;
+            }
+
             lista.appendChild(li);
         }
     }
@@ -1314,6 +1520,9 @@ function resetarHeroi() {
     heroi.nivel = 1;
     heroi.monstrosDerrotados = 0;
     heroi.segundoHeroi = false;
+    heroi.peixes = {};
+    heroi.buffAtual = null;
+
 
     heroi.itens = {
         espada: false,
@@ -1336,7 +1545,8 @@ function resetarHeroi() {
         pocaoPurificadora: false,
         derrotouChefao: false,
         pocoes: 0,
-        elixires: 0
+        elixires: 0,
+        varaNivel: 0
     };
 
     heroi.codigosResgatados = {};
@@ -1549,15 +1759,15 @@ function lutar() {
     let ataqueTotal = heroi.ataque;
     let defesaTotal = heroi.defesa;
 
-    if (time.heroiSecundario) {
+    if (time.heroiSecundario && !time.heroiSecundario.ocupado) { // Adicionado !ocupado
         ataqueTotal += time.heroiSecundario.ataque;
         defesaTotal += time.heroiSecundario.defesa;
     }
-    if (time.capivara) {
+    if (time.capivara && !time.capivara.ocupado) {
         ataqueTotal += time.capivara.ataque;
         defesaTotal += time.capivara.defesa;
     }
-    if (time.monstroAmigo) {
+    if (time.monstroAmigo && !time.monstroAmigo.ocupado) {
         ataqueTotal += time.monstroAmigo.ataque;
         defesaTotal += time.monstroAmigo.defesa;
     }
@@ -1568,6 +1778,22 @@ function lutar() {
     if (time.maeLendaria) {
         ataqueTotal += time.maeLendaria.ataque;
         defesaTotal += time.maeLendaria.defesa;
+    }
+    if (heroi.buffAtual) {
+        if (heroi.buffAtual.tipo === 'ataque' || heroi.buffAtual.tipo === 'todos') {
+            ataqueTotal += heroi.buffAtual.valor;
+        }
+        if (heroi.buffAtual.tipo === 'defesa' || heroi.buffAtual.tipo === 'todos') {
+            defesaTotal += heroi.buffAtual.valor;
+        }
+
+        // Consome uma carga APENAS em combates reais (não exploração)
+        // Se estiver dentro da função lutar():
+        heroi.buffAtual.cargas--;
+        if (heroi.buffAtual.cargas <= 0) {
+            log("🍽️ O efeito da sua comida acabou.");
+            heroi.buffAtual = null;
+        }
     }
 
 
@@ -2104,6 +2330,7 @@ function lutar() {
     atualizarTela();
     verificarNivel();
     atualizarTimeVisual();
+    atualizarPainelTime();
 }
 
 // ==============================
@@ -3083,6 +3310,14 @@ function carregarJogo(slot) {
     desbloqueouMae = obj.desbloqueouMae || false;
     apocalipseAtivo = obj.apocalipseAtivo || false;
     subClasse = obj.subClasse || null;
+    heroi.itens.varaNivel = obj.heroi.itens.varaNivel || 0;
+    heroi.peixes = obj.heroi.peixes || {};
+    heroi.buffAtual = obj.heroi.buffAtual || null;
+
+    // Importante: Reseta expedições ao carregar para evitar bugs de timer
+    if (time.capivara) time.capivara.ocupado = false;
+    if (time.heroiSecundario) time.heroiSecundario.ocupado = false;
+    if (time.monstroAmigo) time.monstroAmigo.ocupado = false;
 
     mutatorsAtivos = obj.mutatorsAtivos || {
         danoAumentado: false,
